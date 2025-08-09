@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@/components/user-provider";
+import { useUser } from "@/hooks/use-user";
 
 // Zod schema for verification form
 const VerifySchema = z.object({

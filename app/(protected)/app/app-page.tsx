@@ -14,7 +14,6 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { FileUploader } from "@/components/file-uploader";
 import { TaskList } from "@/components/task-list";
-import { Navbar } from "@/components/navbar";
 import { Loader2, Notebook, Sparkles } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -32,7 +31,7 @@ type ExtractedDocDataDTO = {
   Tasks: string[];
 };
 
-export default function AppPage() {
+export function AppPageClient() {
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -122,142 +121,136 @@ export default function AppPage() {
   const hasTasks = !!docData && docData.Tasks.length > 0;
 
   return (
-    <div className="min-h-screen bg-white">
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Upload document</CardTitle>
-              <CardDescription>PDF, DOCX, MD, or TXT</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FileUploader
-                value={file}
-                onChange={setFile}
-                accept={[".pdf", ".docx", ".md", ".txt"]}
-              />
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="math-mode"
-                  checked={mathMode}
-                  onCheckedChange={(v) => setMathMode(v === true)}
-                />
-                <Label htmlFor="math-mode" className="text-sm">
-                  Contains math equations (format with LaTeX)
-                </Label>
-              </div>
-              <Button
-                onClick={handleSubmit}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                disabled={!file || isProcessing}
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Extract tasks
-                  </>
-                )}
-              </Button>
+    <div className="grid lg:grid-cols-3 gap-6">
+      <Card className="lg:col-span-1">
+        <CardHeader>
+          <CardTitle>Upload document</CardTitle>
+          <CardDescription>PDF, DOCX, MD, or TXT</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <FileUploader
+            value={file}
+            onChange={setFile}
+            accept={[".pdf", ".docx", ".md", ".txt"]}
+          />
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="math-mode"
+              checked={mathMode}
+              onCheckedChange={(v) => setMathMode(v === true)}
+            />
+            <Label htmlFor="math-mode" className="text-sm">
+              Contains math equations (format with LaTeX)
+            </Label>
+          </div>
+          <Button
+            onClick={handleSubmit}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+            disabled={!file || isProcessing}
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Extract tasks
+              </>
+            )}
+          </Button>
 
-              <Separator />
+          <Separator />
 
-              <div className="space-y-3">
-                <h4 className="text-sm font-medium">Pipeline</h4>
-                <ol className="space-y-2">
-                  {steps.map((step) => (
-                    <li
-                      key={step.key}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <div className="flex items-center gap-2">
-                        <StepDot status={step.status} />
-                        <span>{step.label}</span>
-                      </div>
-                      <Badge
-                        variant={
-                          step.status === "done"
-                            ? "secondary"
-                            : step.status === "error"
-                            ? "destructive"
-                            : "outline"
-                        }
-                      >
-                        {step.status === "idle" && "idle"}
-                        {step.status === "running" && "running"}
-                        {step.status === "done" && "done"}
-                        {step.status === "error" && "error"}
-                      </Badge>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <CardTitle>Extracted document</CardTitle>
-                  <CardDescription>
-                    {hasData
-                      ? "Review the title, description, and tasks"
-                      : "No data yet"}
-                  </CardDescription>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={handleCreateNotion}
-                  disabled={!hasTasks}
-                  className="gap-2 bg-transparent"
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium">Pipeline</h4>
+            <ol className="space-y-2">
+              {steps.map((step) => (
+                <li
+                  key={step.key}
+                  className="flex items-center justify-between text-sm"
                 >
-                  <Notebook className="h-4 w-4" />
-                  Create in Notion
-                </Button>
+                  <div className="flex items-center gap-2">
+                    <StepDot status={step.status} />
+                    <span>{step.label}</span>
+                  </div>
+                  <Badge
+                    variant={
+                      step.status === "done"
+                        ? "secondary"
+                        : step.status === "error"
+                        ? "destructive"
+                        : "outline"
+                    }
+                  >
+                    {step.status === "idle" && "idle"}
+                    {step.status === "running" && "running"}
+                    {step.status === "done" && "done"}
+                    {step.status === "error" && "error"}
+                  </Badge>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="lg:col-span-2">
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <CardTitle>Extracted document</CardTitle>
+              <CardDescription>
+                {hasData
+                  ? "Review the title, description, and tasks"
+                  : "No data yet"}
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              onClick={handleCreateNotion}
+              disabled={!hasTasks}
+              className="gap-2 bg-transparent"
+            >
+              <Notebook className="h-4 w-4" />
+              Create in Notion
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {hasData ? (
+            <>
+              <div className="space-y-1.5">
+                <div className="text-sm text-gray-500">Title</div>
+                <div className="text-base font-medium">{docData!.Title}</div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {hasData ? (
-                <>
-                  <div className="space-y-1.5">
-                    <div className="text-sm text-gray-500">Title</div>
-                    <div className="text-base font-medium">
-                      {docData!.Title}
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <div className="text-sm text-gray-500">Description</div>
-                    <p className="text-sm text-gray-700 whitespace-pre-line">
-                      {docData!.Description}
-                    </p>
-                  </div>
-                  <Separator />
-                  <div className="space-y-3">
-                    <div className="text-sm font-medium">Tasks</div>
-                    <TaskList
-                      tasks={docData!.Tasks}
-                      onChange={(updated) =>
-                        setDocData((prev) =>
-                          prev ? { ...prev, Tasks: updated } : prev
-                        )
-                      }
-                    />
-                  </div>
-                </>
-              ) : (
-                <div className="text-sm text-gray-500">
-                  Extract a document to see its details here.
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+              <div className="space-y-1.5">
+                <div className="text-sm text-gray-500">Description</div>
+                <p className="text-sm text-gray-700 whitespace-pre-line">
+                  {docData!.Description}
+                </p>
+              </div>
+              <Separator />
+              <div className="space-y-3">
+                <div className="text-sm font-medium">Tasks</div>
+                <TaskList
+                  tasks={docData!.Tasks}
+                  onChange={(updated) =>
+                    setDocData((prev) =>
+                      prev ? { ...prev, Tasks: updated } : prev
+                    )
+                  }
+                />
+              </div>
+            </>
+          ) : (
+            <div className="text-sm text-gray-500">
+              Extract a document to see its details here.
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

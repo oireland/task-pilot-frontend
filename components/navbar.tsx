@@ -12,8 +12,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useUser } from "./user-provider"; // Adjust path if necessary
+import { useUser } from "../hooks/use-user"; // Adjust path if necessary
 import { Loader2 } from "lucide-react";
+import { ModeToggle } from "./mode-toggle";
 
 export function Navbar() {
   // 1. Get user state and loading status from the hook
@@ -38,7 +39,7 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur">
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
         <Link href="/" className="font-semibold tracking-tight">
           <span className="text-emerald-600">Task</span>Pilot
@@ -71,6 +72,7 @@ export function Navbar() {
               >
                 <Link href="/signup">Sign up</Link>
               </Button>
+              <ModeToggle />
             </div>
           </>
         ) : (
@@ -115,6 +117,7 @@ export function Navbar() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <ModeToggle />
           </div>
         )}
       </div>

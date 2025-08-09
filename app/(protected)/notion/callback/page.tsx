@@ -1,0 +1,106 @@
+"use client";
+
+import { useEffect, useState, useRef } from "react"; // Import useRef
+import { useSearchParams, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertTriangle, CheckCircle } from "lucide-react";
+import { Spinner } from "@/components/spinner";
+
+export default function NotionCallbackPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Ref to track if the request has been made
+  const requestMadeRef = useRef(false);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(searchParams.get("error"));
+
+  useEffect(() => {
+    // 1. If the request has already been made, do nothing.
+    if (requestMadeRef.current) {
+      return;
+    }
+
+    // 2. Set the flag to true immediately to prevent future runs.
+    requestMadeRef.current = true;
+
+    const code = searchParams.get("code");
+
+    if (error) {
+      setIsLoading(false);
+      return;
+    }
+
+    if (code) {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/notion/exchange-code`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      })
+        .then(async (response) => {
+          if (response.ok) {
+            router.push("/settings");
+          } else {
+            const errorData = await response.json();
+            setError(errorData.error || "An unknown error occurred.");
+            setIsLoading(false);
+          }
+        })
+        .catch(() => {
+          setError("Failed to connect to the server. Please try again.");
+          setIsLoading(false);
+        });
+    } else {
+      setError("Authorization code not found.");
+      setIsLoading(false);
+    }
+  }, [searchParams, router, error]);
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <Card className="w-full max-w-md text-center">
+        <CardHeader>
+          <CardTitle className="text-2xl">
+            {error ? "Connection Failed" : "Connecting to Notion"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center space-y-4 p-6">
+          {isLoading && (
+            <>
+              <Spinner className="h-12 w-12 text-blue-600" />
+              <p className="text-gray-600">
+                Please wait while we connect your Notion account...
+              </p>
+            </>
+          )}
+
+          {error && (
+            <>
+              <AlertTriangle className="h-12 w-12 text-red-500" />
+              <p className="text-red-600">
+                {error === "access_denied"
+                  ? "You have denied access to your Notion account."
+                  : `An error occurred: ${error}`}
+              </p>
+              <Button onClick={() => router.push("/app/settings")}>
+                Return to Settings
+              </Button>
+            </>
+          )}
+
+          {!isLoading && !error && (
+            <>
+              <CheckCircle className="h-12 w-12 text-green-500" />
+              <p className="text-gray-600">
+                Successfully connected! Redirecting...
+              </p>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

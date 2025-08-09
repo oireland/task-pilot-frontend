@@ -1,14 +1,20 @@
-import { UserProvider } from "@/components/user-provider";
+import { UserProvider } from "@/hooks/use-user";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
-        <ThemeProvider>
+      <body className="bg-background">
+        <ThemeProvider
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+          attribute="class"
+        >
           <UserProvider>
             <Navbar />
             {children}
+            <Toaster />
           </UserProvider>
         </ThemeProvider>
       </body>
@@ -19,6 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 import "./globals.css";
 import { ReactNode } from "react";
 import { Navbar } from "@/components/navbar";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata = {
   title: "TaskPilot",

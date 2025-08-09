@@ -9,9 +9,10 @@ export type User = {
   enabled?: boolean;
   notionWorkspaceName?: string;
   notionWorkspaceIcon?: string;
+  notionTargetDatabaseId?: string;
+  notionTargetDatabaseName?: string;
 };
 
-// 1. Add loading to the context type
 type UserContextValue = {
   user: User | null;
   loading: boolean; // Add loading state
@@ -40,6 +41,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       );
       if (res.ok) {
         const data = (await res.json()) as User;
+        console.log("data", data);
+
         setUser(data);
       } else {
         setUser(null);
@@ -47,7 +50,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     } catch {
       setUser(null);
     } finally {
-      // 3. Set loading to false after the fetch is complete (success or fail)
       setLoading(false);
     }
   };

@@ -10,8 +10,6 @@ export default async function VerifyPage({
   const params = await searchParams;
   const email = typeof params?.email === "string" ? params.email : "";
 
-  console.log(`email is ${email}`);
-
   // 2. Only perform the server-side check if an email was provided in the URL.
   if (email) {
     let userEnabled = false;
@@ -24,9 +22,7 @@ export default async function VerifyPage({
         const userData = await response.json();
         userEnabled = userData.enabled;
       }
-    } catch (error) {
-      console.error("Failed to fetch user status:", error);
-    }
+    } catch (error) {}
     if (userEnabled) {
       redirect("/login");
     }

@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@/components/user-provider";
+import { useUser } from "@/hooks/use-user";
 
 // Zod schema: validate email only; password just required by presence
 const LoginSchema = z.object({
@@ -134,6 +134,7 @@ export default function LoginPage() {
         throw new Error(`Failed to load user (${meRes.status})`);
       }
       const me = await meRes.json();
+
       setUser(me);
 
       // --- REDIRECT LOGIC ---

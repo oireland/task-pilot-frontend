@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useUser } from "./user-provider"; // Adjust path to your UserProvider
+import { useUser } from "../hooks/use-user"; // Adjust path to your UserProvider
 import { Loader2 } from "lucide-react";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
