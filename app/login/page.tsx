@@ -1,9 +1,8 @@
 "use client";
 
 import type React from "react";
-
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation"; // Import useSearchParams
 import Link from "next/link";
 import { z } from "zod";
 import {
@@ -34,6 +33,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { setUser } = useUser();
+  const searchParams = useSearchParams(); // Get search params
 
   const [values, setValues] = useState<LoginFormValues>({
     email: "",
@@ -45,12 +45,14 @@ export default function LoginPage() {
   // Focus/blur tracking to control when to show field errors
   const [focused, setFocused] = useState<null | "email" | "password">(null);
   const [touched, setTouched] = useState<{ email: boolean; password: boolean }>(
-    { email: false, password: false }
+    {
+      email: false,
+      password: false,
+    }
   );
   const [showPassword, setShowPassword] = useState(false);
 
   const validate = (next: LoginFormValues) => {
-    // Only surface the first error per field
     const parsed = LoginSchema.safeParse(next);
     if (parsed.success) {
       setErrors({});
@@ -59,7 +61,6 @@ export default function LoginPage() {
     const fieldErrors = parsed.error.flatten().fieldErrors;
     setErrors({
       email: fieldErrors.email?.[0],
-      // We don't show password errors beyond presence, and presence is handled by disabled state
     });
     return false;
   };
@@ -76,7 +77,6 @@ export default function LoginPage() {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const next = { ...values, [key]: e.target.value };
       setValues(next);
-      // Keep validity up to date; email error is shown only after blur
       validate(next);
     };
 
@@ -123,7 +123,6 @@ export default function LoginPage() {
         );
       }
 
-      // Load user from backend session (httpOnly cookie) and store in context
       const meRes = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/users/me`,
         {
@@ -137,7 +136,16 @@ export default function LoginPage() {
       const me = await meRes.json();
       setUser(me);
 
-      router.push("/app");
+      // --- REDIRECT LOGIC ---
+      // Check for a 'from' parameter to redirect back to the previous page
+      const from = searchParams.get("from");
+      // Basic security check to prevent open redirect vulnerabilities
+      if (from && from.startsWith("/")) {
+        router.push(from);
+      } else {
+        // Default redirect if 'from' is not present or invalid
+        router.push("/app");
+      }
     } catch (err: any) {
       toast({
         title: "Login error",
@@ -151,7 +159,7 @@ export default function LoginPage() {
   const emailHasError = !!errors.email && touched.email;
 
   return (
-    <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
+    <div className="flex min-h-[calc(100vh-56px)] items-center justify-center px-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Welcome back</CardTitle>
@@ -216,12 +224,12 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="w-full bg-emerald-600 text-white hover:bg-emerald-700"
               disabled={loading || !canSubmit}
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Logging in...
                 </>
               ) : (
