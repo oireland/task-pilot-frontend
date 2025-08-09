@@ -25,83 +25,105 @@ type Step = {
 };
 
 type ExtractedDocDataDTO = {
-  Title: string;
-  Status: string; // always "Not Started" (hidden in UI)
-  Description: string;
-  Tasks: string[];
+  title: string;
+  status: string;
+  description: string;
+  tasks: string[];
 };
 
 export function AppPageClient() {
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [steps, setSteps] = useState<Step[]>([
-    { key: "upload", label: "Upload received", status: "idle" },
-    { key: "analyze", label: "Analyzing with AI", status: "idle" },
-    { key: "extract", label: "Extracting tasks", status: "idle" },
+    { key: "parse", label: "Parsing document", status: "idle" },
+    { key: "extract", label: "Extracting tasks with AI", status: "idle" },
   ]);
   const [docData, setDocData] = useState<ExtractedDocDataDTO | null>(null);
   const [mathMode, setMathMode] = useState(false);
+
+  const resetState = () => {
+    setDocData(null);
+    setSteps((s) => s.map((st) => ({ ...st, status: "idle" })));
+  };
+
+  const updateStepStatus = (key: string, status: Step["status"]) => {
+    setSteps((s) => s.map((st) => (st.key === key ? { ...st, status } : st)));
+  };
 
   const handleSubmit = async () => {
     if (!file) {
       toast({
         title: "No file selected",
         description: "Please choose a document to process.",
+        variant: "destructive",
       });
       return;
     }
 
     setIsProcessing(true);
-    setSteps((s) =>
-      s.map((st) => ({
-        ...st,
-        status: st.key === "upload" ? "running" : "idle",
-      }))
-    );
+    resetState();
 
     try {
-      await wait(600);
-      setSteps((s) =>
-        s.map((st) =>
-          st.key === "upload"
-            ? { ...st, status: "done" }
-            : st.key === "analyze"
-            ? { ...st, status: "running" }
-            : st
-        )
-      );
-      await wait(900);
-      setSteps((s) =>
-        s.map((st) =>
-          st.key === "analyze"
-            ? { ...st, status: "done" }
-            : st.key === "extract"
-            ? { ...st, status: "running" }
-            : st
-        )
+      // Step 1: Parse the document
+      updateStepStatus("parse", "running");
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("equations", String(mathMode));
+
+      const parseResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tasks/parse`,
+        {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        }
       );
 
-      const data = await mockExtract(file, mathMode);
+      if (!parseResponse.ok) throw new Error("Failed to parse document.");
+      const { documentText } = await parseResponse.json();
+      updateStepStatus("parse", "done");
 
-      await wait(700);
-      setSteps((s) =>
-        s.map((st) => (st.key === "extract" ? { ...st, status: "done" } : st))
+      // Step 2: Extract tasks from the text
+      updateStepStatus("extract", "running");
+      const extractResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tasks/extract`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "text/plain" },
+          body: documentText,
+        }
       );
-      setDocData(data);
-      toast({
-        title: "Document extracted",
-        description: `Found ${data.Tasks.length} tasks.`,
-      });
+      console.log(extractResponse);
+
+      if (!extractResponse.ok) throw new Error("Failed to extract tasks.");
+
+      const extractedData = await extractResponse.json();
+      // Handle cases where no tasks were found
+      if (!extractedData.tasks || extractedData.tasks.length === 0) {
+        toast({
+          title: "No tasks found",
+          description:
+            "The AI could not identify any actionable tasks in the document.",
+        });
+        setDocData({ ...extractedData, tasks: [] });
+      } else {
+        setDocData(extractedData);
+        toast({
+          title: "Document extracted",
+          description: `Found ${extractedData.tasks.length} tasks.`,
+        });
+      }
+      updateStepStatus("extract", "done");
     } catch (e: any) {
-      setSteps((s) =>
-        s.map((st) =>
-          st.status === "running" ? { ...st, status: "error" } : st
-        )
-      );
+      updateStepStatus("parse", "error");
+      updateStepStatus("extract", "error");
       toast({
         title: "Processing failed",
         description: e?.message ?? "Unknown error",
+        variant: "destructive",
       });
     } finally {
       setIsProcessing(false);
@@ -110,18 +132,46 @@ export function AppPageClient() {
 
   const handleCreateNotion = async () => {
     if (!docData) return;
-    await wait(600);
-    toast({
-      title: "Notion list created",
-      description: `Created a Notion checklist for “${docData.Title}” with ${docData.Tasks.length} tasks (mock).`,
-    });
+    setIsCreating(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/notion/pages`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(docData),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Could not create page in Notion.");
+      }
+
+      toast({
+        title: "Notion page created!",
+        description: `Created a checklist for “${docData.title}”.`,
+      });
+      resetState();
+      setFile(null); // Clear file input on success
+    } catch (e: any) {
+      toast({
+        title: "Failed to create Notion page",
+        description: e.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const hasData = !!docData;
-  const hasTasks = !!docData && docData.Tasks.length > 0;
+  const hasTasks = !!docData && docData.tasks.length > 0;
 
   return (
     <div className="grid lg:grid-cols-3 gap-6">
+      {/* --- Upload Card --- */}
       <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle>Upload document</CardTitle>
@@ -130,7 +180,10 @@ export function AppPageClient() {
         <CardContent className="space-y-4">
           <FileUploader
             value={file}
-            onChange={setFile}
+            onChange={(f) => {
+              setFile(f);
+              resetState();
+            }}
             accept={[".pdf", ".docx", ".md", ".txt"]}
           />
           <div className="flex items-center gap-2">
@@ -140,7 +193,7 @@ export function AppPageClient() {
               onCheckedChange={(v) => setMathMode(v === true)}
             />
             <Label htmlFor="math-mode" className="text-sm">
-              Contains math equations (format with LaTeX)
+              Contains math equations (slower)
             </Label>
           </div>
           <Button
@@ -149,16 +202,11 @@ export function AppPageClient() {
             disabled={!file || isProcessing}
           >
             {isProcessing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Extract tasks
-              </>
+              <Sparkles className="mr-2 h-4 w-4" />
             )}
+            Extract tasks
           </Button>
 
           <Separator />
@@ -184,10 +232,7 @@ export function AppPageClient() {
                         : "outline"
                     }
                   >
-                    {step.status === "idle" && "idle"}
-                    {step.status === "running" && "running"}
-                    {step.status === "done" && "done"}
-                    {step.status === "error" && "error"}
+                    {step.status}
                   </Badge>
                 </li>
               ))}
@@ -195,7 +240,7 @@ export function AppPageClient() {
           </div>
         </CardContent>
       </Card>
-
+      {/* --- Results Card --- */}
       <Card className="lg:col-span-2">
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
@@ -210,10 +255,14 @@ export function AppPageClient() {
             <Button
               variant="outline"
               onClick={handleCreateNotion}
-              disabled={!hasTasks}
+              disabled={!hasTasks || isCreating}
               className="gap-2 bg-transparent"
             >
-              <Notebook className="h-4 w-4" />
+              {isCreating ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Notebook className="h-4 w-4" />
+              )}
               Create in Notion
             </Button>
           </div>
@@ -223,29 +272,37 @@ export function AppPageClient() {
             <>
               <div className="space-y-1.5">
                 <div className="text-sm text-gray-500">Title</div>
-                <div className="text-base font-medium">{docData!.Title}</div>
+                <div className="text-base font-medium">{docData.title}</div>
               </div>
               <div className="space-y-1.5">
                 <div className="text-sm text-gray-500">Description</div>
                 <p className="text-sm text-gray-700 whitespace-pre-line">
-                  {docData!.Description}
+                  {docData.description}
                 </p>
               </div>
               <Separator />
               <div className="space-y-3">
-                <div className="text-sm font-medium">Tasks</div>
-                <TaskList
-                  tasks={docData!.Tasks}
-                  onChange={(updated) =>
-                    setDocData((prev) =>
-                      prev ? { ...prev, Tasks: updated } : prev
-                    )
-                  }
-                />
+                <div className="text-sm font-medium">
+                  Tasks ({docData.tasks.length})
+                </div>
+                {hasTasks ? (
+                  <TaskList
+                    tasks={docData.tasks}
+                    onChange={(updated) =>
+                      setDocData((prev) =>
+                        prev ? { ...prev, tasks: updated } : prev
+                      )
+                    }
+                  />
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    No tasks were found in this document.
+                  </p>
+                )}
               </div>
             </>
           ) : (
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 text-center py-10">
               Extract a document to see its details here.
             </div>
           )}
@@ -254,6 +311,8 @@ export function AppPageClient() {
     </div>
   );
 }
+
+// --- Helper Components & Functions ---
 
 function StepDot({ status }: { status: Step["status"] }) {
   const color =
@@ -270,63 +329,4 @@ function StepDot({ status }: { status: Step["status"] }) {
       aria-hidden="true"
     />
   );
-}
-
-function wait(ms: number) {
-  return new Promise((res) => setTimeout(res, ms));
-}
-
-async function mockExtract(
-  file: File,
-  mathMode: boolean
-): Promise<ExtractedDocDataDTO> {
-  // Simulate network/processing delay
-  await wait(500);
-  const filename = file?.name || "document.txt";
-  const title = toTitleCase(
-    filename
-      .replace(/\.[^/.]+$/, "")
-      .replace(/[-_]/g, " ")
-      .trim() || "Untitled Document"
-  );
-  const description = mathMode
-    ? "This document appears to include mathematical expressions. Tasks are prepared with LaTeX-friendly formatting for equations and symbols."
-    : `This document appears to contain action items and exercises related to “${title}”. Below is a concise list of tasks detected from headings and imperative sentences.`;
-
-  const tasks = mathMode ? createMathTasks(title) : createMockTasks(title);
-
-  return {
-    Title: title,
-    Status: "Not Started",
-    Description: description,
-    Tasks: tasks,
-  };
-}
-
-function toTitleCase(s: string) {
-  return s.replace(
-    /\w\S*/g,
-    (txt) => txt[0].toUpperCase() + txt.slice(1).toLowerCase()
-  );
-}
-
-function createMockTasks(seed: string): string[] {
-  const base = seed || "document";
-  return [
-    `Read the introduction of ${base}`,
-    `Highlight key definitions in ${base}`,
-    `Summarize the main objectives from ${base}`,
-    `Draft a checklist of deliverables mentioned in ${base}`,
-    `Plan next steps and tentative deadlines for ${base}`,
-  ];
-}
-
-function createMathTasks(topic: string): string[] {
-  return [
-    "List all variables and symbols (e.g., \\\\alpha, \\\\beta, \\\\gamma, \\\\theta).",
-    "Rewrite the core formulas in LaTeX, for example: E = mc^2 as \\$\\$ E = mc^{2} \\$\\$.",
-    "Differentiate a sample polynomial: \\$\\$ \\\\frac{d}{dx} x^{3} = 3x^{2} \\$\\$.",
-    "Evaluate a basic integral: \\$\\$ \\\\int_{0}^{1} x^{2}\\\\,dx = \\\\frac{1}{3} \\$\\$.",
-    "Typeset a matrix example: \\$\\$ \\\\begin{bmatrix} 1 & 2 \\\\\\\\ 3 & 4 \\\\end{bmatrix} \\$\\$.",
-  ].map((t) => `${t} (from ${topic})`);
 }
