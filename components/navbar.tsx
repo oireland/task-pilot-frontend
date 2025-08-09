@@ -77,7 +77,7 @@ export function Navbar() {
           // --- LOGGED IN STATE ---
           <div className="flex items-center gap-4">
             <Button variant="ghost" asChild>
-              <Link href="/app/dashboard">Dashboard</Link>
+              <Link href="/app">App</Link>
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

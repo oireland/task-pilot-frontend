@@ -6,7 +6,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <body>
         <ThemeProvider>
-          <UserProvider>{children}</UserProvider>
+          <UserProvider>
+            <Navbar />
+            {children}
+          </UserProvider>
         </ThemeProvider>
       </body>
     </html>
@@ -15,7 +18,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
 import "./globals.css";
 import { ReactNode } from "react";
+import { Navbar } from "@/components/navbar";
 
 export const metadata = {
-  generator: "v0.dev",
+  title: "TaskPilot",
+  description: "Turn documents into actionable Notion to‑dos",
 };

@@ -1,13 +1,12 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Check, FileText, ListTodo, Sparkles, Upload } from 'lucide-react'
-import { Navbar } from "@/components/navbar"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Check, FileText, ListTodo, Sparkles, Upload } from "lucide-react";
+import { Navbar } from "@/components/navbar";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white text-gray-900 flex flex-col">
-      <Navbar />
       <main>
         {/* Hero */}
         <section className="relative overflow-hidden">
@@ -23,10 +22,16 @@ export default function LandingPage() {
                   Turn documents into actionable Notion to‑dos
                 </h1>
                 <p className="mt-5 text-gray-600 text-lg md:text-xl">
-                  Upload a syllabus, handbook, or brief. TaskPilot extracts exercises and tasks with AI and drafts a tidy Notion checklist for you.
+                  Upload a syllabus, handbook, or brief. TaskPilot extracts
+                  exercises and tasks with AI and drafts a tidy Notion checklist
+                  for you.
                 </p>
                 <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                  <Button asChild size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
                     <Link href="/signup">Get started free</Link>
                   </Button>
                   <Button asChild size="lg" variant="outline">
@@ -56,7 +61,9 @@ export default function LandingPage() {
                       <div className="rounded-lg bg-emerald-50 p-2">
                         <ListTodo className="h-5 w-5 text-emerald-700" />
                       </div>
-                      <div className="font-medium">Create Notion to‑do list</div>
+                      <div className="font-medium">
+                        Create Notion to‑do list
+                      </div>
                     </div>
                     <div className="mt-6 grid sm:grid-cols-2 gap-3">
                       <div className="rounded-md border p-3">
@@ -80,20 +87,23 @@ export default function LandingPage() {
                         </ul>
                       </div>
                       <div className="rounded-md border p-3">
-                        <div className="text-sm font-medium">Notion Checklist</div>
+                        <div className="text-sm font-medium">
+                          Notion Checklist
+                        </div>
                         <div className="mt-3 text-sm text-gray-600">
                           • Read chapters 1–2
                           <br />
                           • Submit intro assignment
-                          <br />
-                          • Set up project workspace
+                          <br />• Set up project workspace
                         </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
                 <p className="mt-4 text-xs text-gray-500">
-                  When you’re ready to hook up real AI, you can plug in the AI SDK’s generateText/streamText with your preferred model provider. [^2]
+                  When you’re ready to hook up real AI, you can plug in the AI
+                  SDK’s generateText/streamText with your preferred model
+                  provider. [^2]
                 </p>
               </div>
             </div>
@@ -130,11 +140,15 @@ export default function LandingPage() {
                   Start turning documents into progress
                 </h2>
                 <p className="mt-2 text-gray-600">
-                  Sign up and try the mocked flow—no setup required. You can wire your AI and Notion later.
+                  Sign up and try the mocked flow—no setup required. You can
+                  wire your AI and Notion later.
                 </p>
               </div>
               <div className="flex gap-3 md:justify-end">
-                <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                <Button
+                  asChild
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
                   <Link href="/signup">Create account</Link>
                 </Button>
                 <Button asChild variant="outline">
@@ -143,7 +157,8 @@ export default function LandingPage() {
               </div>
             </div>
             <p className="mt-3 text-xs text-gray-500">
-              Prefer a structured task UI? Consider a Task component to show workflow progress with collapsible details. [^1]
+              Prefer a structured task UI? Consider a Task component to show
+              workflow progress with collapsible details. [^1]
             </p>
           </div>
         </section>
@@ -154,7 +169,7 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
 
 function Feature({
@@ -162,9 +177,9 @@ function Feature({
   description,
   icon,
 }: {
-  title: string
-  description: string
-  icon: React.ReactNode
+  title: string;
+  description: string;
+  icon: React.ReactNode;
 }) {
   return (
     <div className="rounded-xl border p-5">
@@ -174,5 +189,5 @@ function Feature({
       </div>
       <p className="mt-3 text-sm text-gray-600">{description}</p>
     </div>
-  )
+  );
 }
