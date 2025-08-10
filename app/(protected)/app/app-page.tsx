@@ -64,16 +64,19 @@ export function AppPageClient() {
 
     setIsProcessing(true);
     resetState();
+    // Use a single "Processing" step for a simpler UI
+    setSteps([
+      { key: "process", label: "Processing document", status: "running" },
+    ]);
 
     try {
-      // Step 1: Parse the document
-      updateStepStatus("parse", "running");
+      // Create a single FormData object for the combined request
       const formData = new FormData();
       formData.append("file", file);
       formData.append("equations", String(mathMode));
 
-      const parseResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tasks/parse`,
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tasks/process`,
         {
           method: "POST",
           credentials: "include",
@@ -81,45 +84,34 @@ export function AppPageClient() {
         }
       );
 
-      if (!parseResponse.ok) throw new Error("Failed to parse document.");
-      const { documentText } = await parseResponse.json();
-      updateStepStatus("parse", "done");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to process document.");
+      }
 
-      // Step 2: Extract tasks from the text
-      updateStepStatus("extract", "running");
-      const extractResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tasks/extract`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "text/plain" },
-          body: documentText,
-        }
-      );
-      console.log(extractResponse);
+      const extractedData: ExtractedDocDataDTO = await response.json();
 
-      if (!extractResponse.ok) throw new Error("Failed to extract tasks.");
-
-      const extractedData = await extractResponse.json();
-      // Handle cases where no tasks were found
       if (!extractedData.tasks || extractedData.tasks.length === 0) {
         toast({
           title: "No tasks found",
           description:
             "The AI could not identify any actionable tasks in the document.",
         });
-        setDocData({ ...extractedData, tasks: [] });
       } else {
-        setDocData(extractedData);
         toast({
           title: "Document extracted",
           description: `Found ${extractedData.tasks.length} tasks.`,
         });
       }
-      updateStepStatus("extract", "done");
+
+      setDocData(extractedData);
+      setSteps([
+        { key: "process", label: "Processing document", status: "done" },
+      ]);
     } catch (e: any) {
-      updateStepStatus("parse", "error");
-      updateStepStatus("extract", "error");
+      setSteps([
+        { key: "process", label: "Processing document", status: "error" },
+      ]);
       toast({
         title: "Processing failed",
         description: e?.message ?? "Unknown error",

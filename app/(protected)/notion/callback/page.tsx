@@ -42,7 +42,7 @@ export default function NotionCallbackPage() {
       })
         .then(async (response) => {
           if (response.ok) {
-            router.push("/settings");
+            router.push("/app/settings");
           } else {
             const errorData = await response.json();
             setError(errorData.error || "An unknown error occurred.");

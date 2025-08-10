@@ -46,7 +46,7 @@ export default async function SettingsPage() {
     : [];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-10">
         <div className="mx-auto max-w-2xl">
           <SettingsPageClient databases={databases} />
