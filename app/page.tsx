@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, FileText, ListTodo, Sparkles, Upload } from "lucide-react";
 import { Navbar } from "@/components/navbar";
+import { AppDemo } from "@/components/app-demo";
 
 export default function LandingPage() {
   return (
@@ -135,6 +136,22 @@ export default function LandingPage() {
                 <ListTodo className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
               }
             />
+          </div>
+        </section>
+
+        {/* --- DEMO SECTION (NEW) --- */}
+        <section id="demo" className="container mx-auto px-4 py-16">
+          <div className="text-center">
+            <h2 className="text-3xl md:text-4xl font-semibold">
+              See It in Action
+            </h2>
+            <p className="mt-3 max-w-2xl mx-auto text-gray-600 dark:text-gray-300">
+              Select a sample document below to see how Task Pilot extracts
+              tasks in just a few seconds. No signup required.
+            </p>
+          </div>
+          <div className="mt-10">
+            <AppDemo />
           </div>
         </section>
 
