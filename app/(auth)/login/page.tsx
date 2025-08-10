@@ -95,6 +95,7 @@ export default function LoginPage() {
       toast({
         title: "Fix form errors",
         description: "Please correct the highlighted fields and try again.",
+        variant: "destructive",
       });
       return;
     }
@@ -111,16 +112,32 @@ export default function LoginPage() {
         }
       );
 
-      let data: any = null;
-      try {
-        data = await res.json();
-      } catch {
-        // ignore non-JSON
-      }
+      // --- IMPROVED ERROR HANDLING ---
       if (!res.ok) {
-        throw new Error(
-          data?.message || data?.error || `Login failed (${res.status})`
-        );
+        // If it's a 401, it's bad credentials.
+        if (res.status === 401) {
+          setErrors({
+            password: "The email or password you entered is incorrect.",
+          });
+          toast({
+            title: "Login Failed",
+            description: "Please check your credentials and try again.",
+            variant: "destructive",
+          });
+        } else {
+          // For all other server errors, show a generic message.
+          const errorData = await res.json().catch(() => null);
+          const message =
+            errorData?.message ||
+            `An unexpected error occurred (${res.status}).`;
+          toast({
+            title: "Login Error",
+            description: message,
+            variant: "destructive",
+          });
+        }
+        // Throw an error to stop execution and go to the finally block.
+        throw new Error("Login failed");
       }
 
       const meRes = await fetch(
@@ -137,21 +154,16 @@ export default function LoginPage() {
 
       setUser(me);
 
-      // --- REDIRECT LOGIC ---
-      // Check for a 'from' parameter to redirect back to the previous page
       const from = searchParams.get("from");
-      // Basic security check to prevent open redirect vulnerabilities
       if (from && from.startsWith("/")) {
         router.push(from);
       } else {
-        // Default redirect if 'from' is not present or invalid
         router.push("/app");
       }
     } catch (err: any) {
-      toast({
-        title: "Login error",
-        description: err?.message ?? "Unknown error",
-      });
+      // The toast is now handled inside the try block for more specific messages.
+      // We catch the error here just to stop the process.
+      console.error("Login process failed:", err.message);
     } finally {
       setLoading(false);
     }
