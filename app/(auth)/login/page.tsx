@@ -1,8 +1,8 @@
 "use client";
 
 import type React from "react";
-import { useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation"; // Import useSearchParams
+import { Suspense, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { z } from "zod";
 import {
@@ -29,7 +29,7 @@ const LoginSchema = z.object({
 type LoginFormValues = z.infer<typeof LoginSchema>;
 type FieldErrors = Partial<Record<keyof LoginFormValues, string>>;
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const { toast } = useToast();
   const { setUser } = useUser();
@@ -95,7 +95,6 @@ export default function LoginPage() {
       toast({
         title: "Fix form errors",
         description: "Please correct the highlighted fields and try again.",
-        variant: "destructive",
       });
       return;
     }
@@ -112,32 +111,16 @@ export default function LoginPage() {
         }
       );
 
-      // --- IMPROVED ERROR HANDLING ---
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        // ignore non-JSON
+      }
       if (!res.ok) {
-        // If it's a 401, it's bad credentials.
-        if (res.status === 401) {
-          setErrors({
-            password: "The email or password you entered is incorrect.",
-          });
-          toast({
-            title: "Login Failed",
-            description: "Please check your credentials and try again.",
-            variant: "destructive",
-          });
-        } else {
-          // For all other server errors, show a generic message.
-          const errorData = await res.json().catch(() => null);
-          const message =
-            errorData?.message ||
-            `An unexpected error occurred (${res.status}).`;
-          toast({
-            title: "Login Error",
-            description: message,
-            variant: "destructive",
-          });
-        }
-        // Throw an error to stop execution and go to the finally block.
-        throw new Error("Login failed");
+        throw new Error(
+          data?.message || data?.error || `Login failed (${res.status})`
+        );
       }
 
       const meRes = await fetch(
@@ -151,19 +134,23 @@ export default function LoginPage() {
         throw new Error(`Failed to load user (${meRes.status})`);
       }
       const me = await meRes.json();
-
       setUser(me);
 
+      // --- REDIRECT LOGIC ---
+      // Check for a 'from' parameter to redirect back to the previous page
       const from = searchParams.get("from");
+      // Basic security check to prevent open redirect vulnerabilities
       if (from && from.startsWith("/")) {
         router.push(from);
       } else {
+        // Default redirect if 'from' is not present or invalid
         router.push("/app");
       }
     } catch (err: any) {
-      // The toast is now handled inside the try block for more specific messages.
-      // We catch the error here just to stop the process.
-      console.error("Login process failed:", err.message);
+      toast({
+        title: "Login error",
+        description: err?.message ?? "Unknown error",
+      });
     } finally {
       setLoading(false);
     }
@@ -262,5 +249,13 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   );
 }

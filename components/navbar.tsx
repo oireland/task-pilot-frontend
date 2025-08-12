@@ -51,17 +51,8 @@ export function Navbar() {
         ) : !user ? (
           // --- LOGGED OUT STATE ---
           <>
-            <nav className="hidden items-center gap-6 text-sm text-gray-600 md:flex">
-              <Link href="/#demo" className="hover:text-gray-900">
-                Demo
-              </Link>
-              <Link href="/#features" className="hover:text-gray-900">
-                Features
-              </Link>
-              <Link href="/#pricing" className="hover:text-gray-900">
-                Pricing
-              </Link>
-            </nav>
+            {/* Add nav in the centre for demo and pricing page when pricing page is created */}
+            {/* <nav className="hidden items-center gap-6 text-sm text-gray-600 md:flex"></nav> */}
             <div className="flex items-center gap-2">
               <Button variant="ghost" asChild>
                 <Link href="/login">Log in</Link>
