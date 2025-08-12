@@ -30,4 +30,7 @@ import { Toaster } from "@/components/ui/toaster";
 export const metadata = {
   title: "TaskPilot",
   description: "Turn documents into actionable Notion to‑dos",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };

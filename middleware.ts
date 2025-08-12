@@ -7,6 +7,7 @@ const publicPaths = [
   "/login",
   "/signup",
   "/verify",
+  "/pricing",
   // Add any other public paths here (e.g., /pricing, /contact)
 ];
 
