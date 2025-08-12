@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { z } from "zod";
@@ -20,7 +20,6 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 
-// Zod schema: validate email only; password just required by presence
 const LoginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string(),
@@ -32,8 +31,8 @@ type FieldErrors = Partial<Record<keyof LoginFormValues, string>>;
 function LoginContent() {
   const router = useRouter();
   const { toast } = useToast();
-  const { setUser } = useUser();
-  const searchParams = useSearchParams(); // Get search params
+  const { user, setUser, loading: isUserLoading } = useUser();
+  const searchParams = useSearchParams();
 
   const [values, setValues] = useState<LoginFormValues>({
     email: "",
@@ -42,7 +41,14 @@ function LoginContent() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
 
-  // Focus/blur tracking to control when to show field errors
+  // This effect will run when the component mounts and whenever the user status changes.
+  useEffect(() => {
+    // If the initial user check is done and we have a user, redirect them.
+    if (!isUserLoading && user) {
+      router.push("/app");
+    }
+  }, [user, isUserLoading, router]);
+
   const [focused, setFocused] = useState<null | "email" | "password">(null);
   const [touched, setTouched] = useState<{ email: boolean; password: boolean }>(
     {
@@ -136,14 +142,10 @@ function LoginContent() {
       const me = await meRes.json();
       setUser(me);
 
-      // --- REDIRECT LOGIC ---
-      // Check for a 'from' parameter to redirect back to the previous page
       const from = searchParams.get("from");
-      // Basic security check to prevent open redirect vulnerabilities
       if (from && from.startsWith("/")) {
         router.push(from);
       } else {
-        // Default redirect if 'from' is not present or invalid
         router.push("/app");
       }
     } catch (err: any) {
@@ -157,6 +159,15 @@ function LoginContent() {
   };
 
   const emailHasError = !!errors.email && touched.email;
+
+  // While checking for a user, or if a user is found (and redirecting), show a loader.
+  if (isUserLoading || user) {
+    return (
+      <div className="flex min-h-[calc(100vh-56px)] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-[calc(100vh-56px)] items-center justify-center px-4">
