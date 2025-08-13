@@ -121,7 +121,7 @@ function LoginContent() {
         );
       }
 
-      const { token } = await res.json();
+      const { token } = data;
       login(token);
 
       const from = searchParams.get("from");

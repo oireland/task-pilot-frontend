@@ -127,7 +127,7 @@ export default function VerifyPage({ initialEmail }: { initialEmail: string }) {
         );
       }
 
-      const { token } = await res.json();
+      const { token } = data;
       login(token); // Use the new login function from the hook
 
       toast({
