@@ -8,6 +8,7 @@ import {
   useState,
   useCallback,
 } from "react";
+import { api } from "@/lib/api"; // 1. Import the api helper
 
 export type User = {
   id?: number;
@@ -56,22 +57,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     setLoading(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/users/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (res.ok) {
-        const data = (await res.json()) as User;
-        setUser(data);
-      } else {
-        logout(); // If the token is invalid, log out
-      }
+      // 2. Use the api.get method instead of fetch
+      const data = await api.get("/api/v1/users/me");
+      setUser(data as User);
     } catch (error) {
-      console.error("Failed to refresh user:", error);
+      console.error("Failed to refresh user, logging out.", error);
       logout();
     } finally {
       setLoading(false);

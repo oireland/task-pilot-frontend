@@ -17,6 +17,7 @@ import { TaskList } from "@/components/task-list";
 import { Loader2, Notebook, Sparkles } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { api } from "@/lib/api";
 
 type Step = {
   key: string;
@@ -75,14 +76,7 @@ export function AppPageClient() {
       formData.append("file", file);
       formData.append("equations", String(mathMode));
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tasks/process`,
-        {
-          method: "POST",
-          credentials: "include",
-          body: formData,
-        }
-      );
+      const response = await api.postForm("/api/v1/tasks/process", formData);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -126,15 +120,7 @@ export function AppPageClient() {
     if (!docData) return;
     setIsCreating(true);
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/notion/pages`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(docData),
-        }
-      );
+      const response = await api.post("/api/v1/notion/pages", docData);
 
       if (!response.ok) {
         const errorData = await response.json();

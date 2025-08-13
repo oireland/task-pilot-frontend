@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 import { Spinner } from "@/components/spinner";
+import { api } from "@/lib/api";
 
 // This component contains all the logic from your original page.tsx
 export default function NotionCallbackClient() {
@@ -30,12 +31,8 @@ export default function NotionCallbackClient() {
     }
 
     if (code) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/notion/exchange-code`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      })
+      api
+        .post("/api/v1/notion/exchange-code", { code })
         .then(async (response) => {
           if (response.ok) {
             router.push("/app/settings");
@@ -50,7 +47,7 @@ export default function NotionCallbackClient() {
           setIsLoading(false);
         });
     } else {
-      setError("Authorization code not found.");
+      setError("Authorisation code not found.");
       setIsLoading(false);
     }
   }, [searchParams, router, error]);
