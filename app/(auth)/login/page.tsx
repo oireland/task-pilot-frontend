@@ -31,7 +31,7 @@ type FieldErrors = Partial<Record<keyof LoginFormValues, string>>;
 function LoginContent() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, setUser, loading: isUserLoading } = useUser();
+  const { setUser } = useUser();
   const searchParams = useSearchParams();
 
   const [values, setValues] = useState<LoginFormValues>({
@@ -40,14 +40,6 @@ function LoginContent() {
   });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
-
-  // This effect will run when the component mounts and whenever the user status changes.
-  useEffect(() => {
-    // If the initial user check is done and we have a user, redirect them.
-    if (!isUserLoading && user) {
-      router.push("/app");
-    }
-  }, [user, isUserLoading, router]);
 
   const [focused, setFocused] = useState<null | "email" | "password">(null);
   const [touched, setTouched] = useState<{ email: boolean; password: boolean }>(
@@ -159,15 +151,6 @@ function LoginContent() {
   };
 
   const emailHasError = !!errors.email && touched.email;
-
-  // While checking for a user, or if a user is found (and redirecting), show a loader.
-  if (isUserLoading || user) {
-    return (
-      <div className="flex min-h-[calc(100vh-56px)] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-[calc(100vh-56px)] items-center justify-center px-4">

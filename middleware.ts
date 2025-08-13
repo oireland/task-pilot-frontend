@@ -1,37 +1,27 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// 1. Define your public routes
-const publicPaths = [
-  "/", // Landing page
-  "/login",
-  "/signup",
-  "/verify",
-  "/pricing",
-  // Add any other public paths here
-];
+// Define your protected and public routes
+const protectedPaths = ["/app", "/app/settings"];
+const publicOnlyPaths = ["/login", "/signup", "/verify"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  // 2. Check if the current path is a public one
-  if (publicPaths.includes(pathname)) {
-    // If it's a public path, allow the request to proceed
-    return NextResponse.next();
-  }
-
-  // 3. For all other (protected) routes, check for the session cookie
   const sessionCookie = request.cookies.get("task_pilot_auth_token");
 
-  if (!sessionCookie) {
-    // If no cookie, redirect to the login page
+  // --- Redirect logged-in users from public-only pages ---
+  if (sessionCookie && publicOnlyPaths.includes(pathname)) {
+    return NextResponse.redirect(new URL("/app", request.url));
+  }
+
+  // --- Redirect logged-out users from protected pages ---
+  if (!sessionCookie && protectedPaths.some((p) => pathname.startsWith(p))) {
     const loginUrl = new URL("/login", request.url);
-    // You can add a 'from' query parameter to redirect back after login
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // 4. If the cookie exists, let the request proceed
+  // Allow the request to proceed
   return NextResponse.next();
 }
 
