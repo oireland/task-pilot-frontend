@@ -8,7 +8,7 @@ const publicPaths = [
   "/signup",
   "/verify",
   "/pricing",
-  // Add any other public paths here (e.g., /pricing, /contact)
+  // Add any other public paths here
 ];
 
 export function middleware(request: NextRequest) {
@@ -21,7 +21,7 @@ export function middleware(request: NextRequest) {
   }
 
   // 3. For all other (protected) routes, check for the session cookie
-  const sessionCookie = request.cookies.get("task_pilot_auth_token"); // <-- Use your actual cookie name
+  const sessionCookie = request.cookies.get("task_pilot_auth_token");
 
   if (!sessionCookie) {
     // If no cookie, redirect to the login page
