@@ -110,7 +110,6 @@ export default function SignupPage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({ title: "Checking toast" });
     if (!validate(values)) {
       toast({
         title: "Fix form errors",
@@ -121,10 +120,6 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      console.log(
-        `Sending post request to ${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/signup`
-      );
-
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/signup`,
         {
