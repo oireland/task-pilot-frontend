@@ -37,7 +37,7 @@ const RESEND_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
 export default function VerifyPage({ initialEmail }: { initialEmail: string }) {
   const router = useRouter();
   const { toast } = useToast();
-  const { setUser } = useUser();
+  const { login } = useUser();
 
   const [values, setValues] = useState<VerifyFormValues>({
     email: initialEmail,
@@ -127,19 +127,8 @@ export default function VerifyPage({ initialEmail }: { initialEmail: string }) {
         );
       }
 
-      // Load user from session and store in context
-      const meRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/users/me`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-      if (!meRes.ok) {
-        throw new Error(`Failed to load user (${meRes.status})`);
-      }
-      const me = await meRes.json();
-      setUser(me);
+      const { token } = await res.json();
+      login(token); // Use the new login function from the hook
 
       toast({
         title: "Email verified",

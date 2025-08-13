@@ -18,18 +18,11 @@ import { ModeToggle } from "./mode-toggle";
 
 export function Navbar() {
   // 1. Get user state and loading status from the hook
-  const { user, setUser, loading } = useUser();
+  const { user, logout, loading } = useUser();
   const router = useRouter();
 
   const handleLogout = async () => {
-    // Call your backend logout endpoint
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
-
-    // Clear user state on the client and redirect
-    setUser(null);
+    logout();
     router.push("/");
   };
 

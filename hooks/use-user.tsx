@@ -1,7 +1,13 @@
 "use client";
 
 import type React from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 
 export type User = {
   id?: number;
@@ -13,13 +19,14 @@ export type User = {
   notionTargetDatabaseName?: string;
   requestsInCurrentDay?: number;
   requestsInCurrentMonth?: number;
-  planRefreshDate?: string; // The backend's LocalDate becomes a string
+  planRefreshDate?: string;
 };
 
 type UserContextValue = {
   user: User | null;
   loading: boolean;
-  setUser: (user: User | null) => void;
+  login: (token: string) => void;
+  logout: () => void;
   refreshUser: () => Promise<void>;
 };
 
@@ -29,36 +36,54 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const refreshUser = async () => {
-    if (!loading) setLoading(true);
+  const login = (token: string) => {
+    localStorage.setItem("task_pilot_auth_token", token);
+    refreshUser();
+  };
 
+  const logout = () => {
+    localStorage.removeItem("task_pilot_auth_token");
+    setUser(null);
+  };
+
+  const refreshUser = useCallback(async () => {
+    const token = localStorage.getItem("task_pilot_auth_token");
+    if (!token) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/users/me`,
         {
-          method: "GET",
-          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
       if (res.ok) {
         const data = (await res.json()) as User;
         setUser(data);
       } else {
-        setUser(null);
+        logout(); // If the token is invalid, log out
       }
-    } catch {
-      setUser(null);
+    } catch (error) {
+      console.error("Failed to refresh user:", error);
+      logout();
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    void refreshUser();
   }, []);
 
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
+
   return (
-    <UserContext.Provider value={{ user, loading, setUser, refreshUser }}>
+    <UserContext.Provider value={{ user, loading, login, logout, refreshUser }}>
       {children}
     </UserContext.Provider>
   );
