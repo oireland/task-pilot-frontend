@@ -117,7 +117,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-3 gap-6">
             <Feature
               title="Upload any doc"
-              description="PDF, DOCX, Markdown, or plain text—TaskPilot handles the formats you use most."
+              description="PDF, DOCX, or plain text—TaskPilot handles the formats you use most."
               icon={
                 <Upload className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
               }

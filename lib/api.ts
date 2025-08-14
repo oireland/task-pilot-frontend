@@ -1,15 +1,12 @@
 // A helper function to add the auth token to every API request
 async function fetcher(url: string, options: RequestInit = {}) {
-  // Use the standard Headers object for type safety
   const headers = new Headers(options.headers);
 
-  // Get the token from localStorage and add it to the Authorization header
   const token = localStorage.getItem("task_pilot_auth_token");
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  // THE FIX: Only set Content-Type for non-FormData requests
   if (!(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
@@ -19,11 +16,26 @@ async function fetcher(url: string, options: RequestInit = {}) {
     headers,
   });
 
+  // --- IMPROVED ERROR HANDLING ---
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.message || `Request failed with status ${response.status}`
-    );
+    let errorMessage = `Request failed with status ${response.status}`;
+    try {
+      // First, try to parse the error response as JSON
+      const errorData = await response.json();
+      // Use the 'message' or 'error' field from the JSON if available
+      errorMessage = errorData.message || errorData.error || errorMessage;
+    } catch (jsonError) {
+      // If parsing as JSON fails, the error might be plain text
+      try {
+        const textError = await response.text();
+        if (textError) {
+          errorMessage = textError;
+        }
+      } catch (textError) {
+        // Ignore if reading as text also fails, fallback to the status code message
+      }
+    }
+    throw new Error(errorMessage);
   }
 
   const contentType = response.headers.get("content-type");
@@ -39,7 +51,6 @@ export const api = {
   get: (url: string) => fetcher(url, { method: "GET" }),
   post: (url: string, body: any) =>
     fetcher(url, { method: "POST", body: JSON.stringify(body) }),
-  // New method specifically for FormData
   postForm: (url: string, formData: FormData) =>
     fetcher(url, { method: "POST", body: formData }),
   put: (url: string, body: any) =>
