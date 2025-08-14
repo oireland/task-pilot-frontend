@@ -141,7 +141,9 @@ export default function SettingsPage() {
             <Button
               variant="outline"
               className="gap-2 bg-transparent"
-              onClick={() => router.push("/notion/connect")}
+              onClick={() =>
+                router.push(`${process.env.NEXT_PUBLIC_NOTION_AUTH_URL}`)
+              }
             >
               <ExternalLink className="h-4 w-4" />
               Reconnect
