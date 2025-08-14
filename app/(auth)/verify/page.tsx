@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import VerifyForm from "@/components/verify-form"; // Your client component
+import VerifyForm from "@/app/(auth)/verify/verify-form"; // Your client component
 
 export default async function VerifyPage({
   searchParams,

@@ -8,7 +8,6 @@ import { AlertTriangle, CheckCircle } from "lucide-react";
 import { Spinner } from "@/components/spinner";
 import { api } from "@/lib/api";
 
-// This component contains all the logic from your original page.tsx
 export default function NotionCallbackClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -33,21 +32,18 @@ export default function NotionCallbackClient() {
     if (code) {
       api
         .post("/api/v1/notion/exchange-code", { code })
-        .then(async (response) => {
-          if (response.ok) {
-            router.push("/app/settings");
-          } else {
-            const errorData = await response.json();
-            setError(errorData.error || "An unknown error occurred.");
-            setIsLoading(false);
-          }
+        .then(() => {
+          // THE FIX: If this block is reached, the request was successful.
+          // We can directly redirect the user.
+          router.push("/app/settings");
         })
-        .catch(() => {
-          setError("Failed to connect to the server. Please try again.");
+        .catch((err: Error) => {
+          // The .catch() block will handle any network or API errors.
+          setError(err.message || "Failed to connect to the server.");
           setIsLoading(false);
         });
     } else {
-      setError("Authorisation code not found.");
+      setError("Authorization code not found.");
       setIsLoading(false);
     }
   }, [searchParams, router, error]);

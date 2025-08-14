@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle2, CircleAlert, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
 
 // Zod rules: length, digit, special character
 const PasswordSchema = z
@@ -120,29 +121,7 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/signup`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(values),
-        }
-      );
-
-      let data: any = null;
-      try {
-        data = await res.json();
-      } catch {
-        // ignore non-JSON
-      }
-
-      if (!res.ok) {
-        throw new Error(
-          data?.message || data?.error || `Sign up failed (${res.status})`
-        );
-      }
-
+      await api.post("/api/v1/auth/signup", values);
       router.push(`/verify?email=${values.email}`);
     } catch (err: any) {
       toast({

@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
+import { api } from "@/lib/api";
 
 const LoginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -99,29 +100,7 @@ function LoginContent() {
 
     setLoading(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(values),
-        }
-      );
-
-      let data: any = null;
-      try {
-        data = await res.json();
-      } catch {
-        // ignore non-JSON
-      }
-      if (!res.ok) {
-        throw new Error(
-          data?.message || data?.error || `Login failed (${res.status})`
-        );
-      }
-
-      const { token } = data;
+      const { token } = await api.post("/api/v1/auth/login", values);
       login(token);
 
       const from = searchParams.get("from");

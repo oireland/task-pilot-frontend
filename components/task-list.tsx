@@ -1,34 +1,34 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { cn } from "@/lib/utils"
-import { Plus, X } from 'lucide-react'
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { Plus, X } from "lucide-react";
 
 type Props = {
-  tasks: string[]
-  onChange?: (tasks: string[]) => void
-  editable?: boolean
-}
+  tasks: string[];
+  onChange?: (tasks: string[]) => void;
+  editable?: boolean;
+};
 
 export function TaskList({ tasks, onChange, editable = true }: Props) {
   const handleUpdate = (index: number, value: string) => {
-    if (!onChange) return
-    const updated = [...tasks]
-    updated[index] = value
-    onChange(updated)
-  }
+    if (!onChange) return;
+    const updated = [...tasks];
+    updated[index] = value;
+    onChange(updated);
+  };
 
   const handleRemove = (index: number) => {
-    if (!onChange) return
-    const updated = tasks.filter((_, i) => i !== index)
-    onChange(updated)
-  }
+    if (!onChange) return;
+    const updated = tasks.filter((_, i) => i !== index);
+    onChange(updated);
+  };
 
   const handleAdd = () => {
-    if (!onChange) return
-    onChange([...tasks, ""])
-  }
+    if (!onChange) return;
+    onChange([...tasks, ""]);
+  };
 
   if (!editable) {
     return (
@@ -37,20 +37,22 @@ export function TaskList({ tasks, onChange, editable = true }: Props) {
           <li key={i}>{t}</li>
         ))}
       </ul>
-    )
+    );
   }
 
   return (
     <div className="space-y-3">
       {tasks.length === 0 && (
-        <div className="text-sm text-gray-500">No tasks found. Add tasks below.</div>
+        <div className="text-sm text-gray-500">
+          No tasks found. Add tasks below.
+        </div>
       )}
       {tasks.map((t, i) => (
         <div
           key={i}
           className={cn(
             "flex items-center gap-2 rounded-md border p-2",
-            "bg-white"
+            "bg-background"
           )}
         >
           <Input
@@ -70,10 +72,15 @@ export function TaskList({ tasks, onChange, editable = true }: Props) {
           </Button>
         </div>
       ))}
-      <Button type="button" variant="outline" className="gap-2" onClick={handleAdd}>
+      <Button
+        type="button"
+        variant="outline"
+        className="gap-2"
+        onClick={handleAdd}
+      >
         <Plus className="h-4 w-4" />
         Add task
       </Button>
     </div>
-  )
+  );
 }

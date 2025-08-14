@@ -20,6 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
+import { api } from "@/lib/api";
 
 // Zod schema for verification form
 const VerifySchema = z.object({
@@ -104,31 +105,8 @@ export default function VerifyPage({ initialEmail }: { initialEmail: string }) {
 
     setLoading(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/verify`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(values),
-        }
-      );
-
-      let data: any = null;
-      try {
-        data = await res.json();
-      } catch {
-        // ignore non-JSON
-      }
-
-      if (!res.ok) {
-        throw new Error(
-          data?.message || data?.error || `Verification failed (${res.status})`
-        );
-      }
-
-      const { token } = data;
-      login(token); // Use the new login function from the hook
+      const { token } = await api.post("/api/v1/auth/verify", values);
+      login(token); // Assumes login function from useUser hook
 
       toast({
         title: "Email verified",
@@ -165,25 +143,7 @@ export default function VerifyPage({ initialEmail }: { initialEmail: string }) {
 
     setResending(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/verify/resend?email=${values.email}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
-
-      let data: any = null;
-      try {
-        data = await res.json();
-      } catch {}
-
-      if (!res.ok) {
-        const msg =
-          data?.message || data?.error || `Resend failed (${res.status})`;
-        throw new Error(msg);
-      }
+      await api.post(`/api/v1/auth/verify/resend?email=${values.email}`, {});
 
       const until = Date.now() + RESEND_COOLDOWN_MS;
       setResendUntil(until);
