@@ -1,24 +1,27 @@
-import { cookies } from "next/headers";
+"use client";
+
+import { useUser } from "@/hooks/use-user";
 import { ConnectNotionCTA } from "@/components/connect-notion-cta";
-import { Navbar } from "@/components/navbar";
 import { AppPageClient } from "./app-page";
-import { getNotionConnectionStatus } from "@/lib/notion";
+import { Loader2 } from "lucide-react";
 
-// Function to get the user's Notion connection status from the backend
+export default function AppPage() {
+  const { user, loading } = useUser();
 
-export default async function AppPage() {
-  const cookieStore = await cookies();
-  const authTokenCookie = cookieStore.get("task_pilot_auth_token");
-  const cookie = authTokenCookie
-    ? `task_pilot_auth_token=${authTokenCookie.value}`
-    : undefined;
+  // While the user object is loading from the initial API call, show a spinner.
+  if (loading) {
+    return (
+      <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
-  const isNotionConnected = await getNotionConnectionStatus(cookie);
-
+  // Once loaded, check for the Notion connection and render the appropriate component.
   return (
-    <div className="min-h-screen bg-bg-background">
+    <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-10">
-        {isNotionConnected ? <AppPageClient /> : <ConnectNotionCTA />}
+        {user?.notionWorkspaceName ? <AppPageClient /> : <ConnectNotionCTA />}
       </main>
     </div>
   );
