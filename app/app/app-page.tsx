@@ -35,6 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import Image from "next/image";
 
 type Step = {
   key: string;
@@ -346,7 +347,13 @@ export function AppPageClient() {
                   {isCreating ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <Notebook className="h-4 w-4" />
+                    <Image
+                      src="/icons/notion-logo.svg"
+                      alt="Notion Logo"
+                      width={16}
+                      height={16}
+                      className="mr-2"
+                    />
                   )}
                   Create in Notion
                 </Button>

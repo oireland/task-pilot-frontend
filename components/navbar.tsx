@@ -1,8 +1,9 @@
+// components/navbar.tsx
 "use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,12 +13,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useUser } from "../hooks/use-user"; // Adjust path if necessary
+import { useUser } from "../hooks/use-user";
 import { Loader2 } from "lucide-react";
 import { ModeToggle } from "./mode-toggle";
+import { cn } from "@/lib/utils";
 
 export function Navbar() {
-  // 1. Get user state and loading status from the hook
   const { user, logout, loading } = useUser();
   const router = useRouter();
 
@@ -26,7 +27,6 @@ export function Navbar() {
     router.push("/");
   };
 
-  // Helper to get initials from email
   const getInitials = (email?: string) => {
     return email ? email.substring(0, 2).toUpperCase() : "U";
   };
@@ -38,13 +38,11 @@ export function Navbar() {
           <span className="text-emerald-600">Task</span>Pilot
         </Link>
 
-        {/* 2. Conditionally render navigation based on user state */}
         {loading ? (
-          <div /> // Render a placeholder during load to prevent layout shift
+          <div />
         ) : !user ? (
-          // --- LOGGED OUT STATE ---
+          // --- UPDATED LOGGED OUT STATE ---
           <>
-            {/* Add nav in the centre for demo and pricing page when pricing page is created */}
             <nav className="hidden items-center gap-6 text-sm text-gray-600 md:flex">
               <Link
                 href="/#demo"
@@ -60,24 +58,44 @@ export function Navbar() {
               </Link>
             </nav>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" asChild>
-                <Link href="/login">Log in</Link>
-              </Button>
-              <Button
-                className="bg-emerald-600 text-white hover:bg-emerald-700"
-                asChild
+              <Link
+                href="/login"
+                className={cn(buttonVariants({ variant: "ghost" }))}
               >
-                <Link href="/signup">Sign up</Link>
-              </Button>
+                Log in
+              </Link>
+              <Link
+                href="/signup"
+                className={cn(
+                  buttonVariants({
+                    variant: "default",
+                    className: "bg-emerald-600 text-white hover:bg-emerald-700",
+                  })
+                )}
+              >
+                Sign up
+              </Link>
               <ModeToggle />
             </div>
           </>
         ) : (
           // --- LOGGED IN STATE ---
           <div className="flex items-center gap-4">
-            <Button variant="ghost" asChild>
-              <Link href="/app">App</Link>
-            </Button>
+            <div>
+              <Link
+                href="/app"
+                className={cn(buttonVariants({ variant: "ghost" }))}
+              >
+                App
+              </Link>
+              <Link
+                href="/app/tasks"
+                className={cn(buttonVariants({ variant: "ghost" }))}
+              >
+                Tasks
+              </Link>
+            </div>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
