@@ -3,8 +3,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image"; // Import the Next.js Image component
+import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
+import { useUser } from "@/hooks/use-user"; // 1. Import useUser
 import {
   AccordionContent,
   AccordionItem,
@@ -14,6 +15,12 @@ import { CardDescription, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"; // 2. Import Tooltip components
 import { ListTodo, Loader2 } from "lucide-react";
 import type { TaskDTO } from "./types";
 
@@ -24,8 +31,11 @@ type Props = {
 export function TaskCard({ taskDoc }: Props) {
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useUser(); // 3. Get user
   const [isExporting, setIsExporting] = useState(false);
+  const isNotionConnected = !!user?.notionWorkspaceName;
 
+  // ... (handleExportToNotion function remains the same)
   const handleExportToNotion = async () => {
     setIsExporting(true);
     try {
@@ -67,11 +77,32 @@ export function TaskCard({ taskDoc }: Props) {
     }
   };
 
+  const exportButton = (
+    <Button
+      onClick={handleExportToNotion}
+      disabled={isExporting || !isNotionConnected}
+    >
+      {isExporting ? (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      ) : (
+        <Image
+          src="/icons/notion-logo.svg"
+          alt="Notion Logo"
+          width={16}
+          height={16}
+          className="mr-2"
+        />
+      )}
+      Export to Notion
+    </Button>
+  );
+
   return (
     <AccordionItem
       value={taskDoc.id}
       className="border rounded-lg px-4 bg-card"
     >
+      {/* ... (AccordionTrigger and item list) */}
       <AccordionTrigger className="hover:no-underline">
         <div className="text-left">
           <CardTitle>{taskDoc.title}</CardTitle>
@@ -96,21 +127,21 @@ export function TaskCard({ taskDoc }: Props) {
           ))}
         </ul>
         <div className="mt-6 pt-4 border-t">
-          <Button onClick={handleExportToNotion} disabled={isExporting}>
-            {isExporting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              // Use the Image component to load your SVG
-              <Image
-                src="/icons/notion-logo.svg"
-                alt="Notion Logo"
-                width={16}
-                height={16}
-                className="mr-2"
-              />
-            )}
-            Export to Notion
-          </Button>
+          {/* 4. Wrap the button with Tooltip logic */}
+          {isNotionConnected ? (
+            exportButton
+          ) : (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>{exportButton}</span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Connect to Notion in your settings to export.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       </AccordionContent>
     </AccordionItem>

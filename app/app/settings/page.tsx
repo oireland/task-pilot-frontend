@@ -48,6 +48,8 @@ export default function SettingsPage() {
   const [databases, setDatabases] = useState<NotionDatabase[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
+  const isNotionConnected = useMemo(() => !!user?.notionWorkspaceName, [user]);
+
   useEffect(() => {
     if (user?.notionTargetDatabaseId) {
       setSelectedId(user.notionTargetDatabaseId);
@@ -60,12 +62,19 @@ export default function SettingsPage() {
 
       setLoadingData(true);
       try {
+        // Always fetch the plan data
+        const planDataPromise = api.get("/api/v1/plans/me");
+
+        // Only fetch databases if Notion is connected
+        const dbDataPromise = isNotionConnected
+          ? api.get("/api/v1/notion/databases")
+          : Promise.resolve([]);
+
         const [planData, dbData] = await Promise.all([
-          api.get("/api/v1/plans/me"),
-          user.notionWorkspaceName
-            ? api.get("/api/v1/notion/databases")
-            : Promise.resolve([]),
+          planDataPromise,
+          dbDataPromise,
         ]);
+
         setPlan(planData as PlanDTO);
         setDatabases(dbData as NotionDatabase[]);
       } catch (error) {
@@ -81,7 +90,7 @@ export default function SettingsPage() {
     };
 
     fetchData();
-  }, [user, toast]);
+  }, [user, isNotionConnected, toast]);
 
   const selectedDb = useMemo(
     () => databases.find((d) => d.id === selectedId),
@@ -109,75 +118,78 @@ export default function SettingsPage() {
     }
   };
 
-  const isNotionConnected = useMemo(() => !!user?.notionWorkspaceName, [user]);
-
   if (!user) {
-    return null; // The AuthGuard is already showing a loader
-  }
-
-  if (!isNotionConnected) {
-    return <ConnectNotion />;
+    return null; // AuthGuard shows a loader
   }
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            Notion settings
-          </CardTitle>
-          <CardDescription>
-            Choose the Notion database where TaskPilot will store extracted
-            tasks.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-gray-600">Connection</span>
-            <Badge variant="secondary">
-              Connected to {user.notionWorkspaceName}
-            </Badge>
-            <Button
-              variant="outline"
-              className="gap-2 bg-transparent"
-              onClick={() =>
-                router.push(`${process.env.NEXT_PUBLIC_NOTION_AUTH_URL}`)
-              }
-            >
-              <ExternalLink className="h-4 w-4" />
-              Reconnect
-            </Button>
-          </div>
-          <Separator />
-          <div className="space-y-2">
-            <Label htmlFor="database">Target database</Label>
-            <Select value={selectedId} onValueChange={(v) => setSelectedId(v)}>
-              <SelectTrigger id="database" className="w-full">
-                <SelectValue placeholder="Select a Notion database" />
-              </SelectTrigger>
-              <SelectContent>
-                {databases.map((db) => (
-                  <SelectItem key={db.id} value={db.id}>
-                    {db.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex gap-3">
-            <Button
-              className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
-              onClick={handleSave}
-              disabled={!selectedDb}
-            >
-              <Save className="h-4 w-4" />
-              Save
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Conditionally render the Notion settings or the connect prompt */}
+      {isNotionConnected ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              Notion settings
+            </CardTitle>
+            <CardDescription>
+              Choose the Notion database where TaskPilot will store extracted
+              tasks.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-gray-600">Connection</span>
+              <Badge variant="secondary">
+                Connected to {user.notionWorkspaceName}
+              </Badge>
+              <Button
+                variant="outline"
+                className="gap-2 bg-transparent"
+                onClick={() =>
+                  router.push(`${process.env.NEXT_PUBLIC_NOTION_AUTH_URL}`)
+                }
+              >
+                <ExternalLink className="h-4 w-4" />
+                Reconnect
+              </Button>
+            </div>
+            <Separator />
+            <div className="space-y-2">
+              <Label htmlFor="database">Target database</Label>
+              <Select
+                value={selectedId}
+                onValueChange={(v) => setSelectedId(v)}
+              >
+                <SelectTrigger id="database" className="w-full">
+                  <SelectValue placeholder="Select a Notion database" />
+                </SelectTrigger>
+                <SelectContent>
+                  {databases.map((db) => (
+                    <SelectItem key={db.id} value={db.id}>
+                      {db.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+                onClick={handleSave}
+                disabled={!selectedDb}
+              >
+                <Save className="h-4 w-4" />
+                Save
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <ConnectNotion />
+      )}
 
+      {/* Plan & Usage is always visible */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
