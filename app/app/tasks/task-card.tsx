@@ -1,11 +1,10 @@
-// app/app/tasks/task-card.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { formatDistanceToNow } from "date-fns";
-import { useUser } from "@/hooks/use-user"; // 1. Import useUser
+import { format, formatDistanceToNow } from "date-fns";
+import { useUser } from "@/hooks/use-user";
 import {
   AccordionContent,
   AccordionItem,
@@ -20,22 +19,31 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"; // 2. Import Tooltip components
-import { ListTodo, Loader2 } from "lucide-react";
+} from "@/components/ui/tooltip";
+import { ListTodo, Loader2, Pencil, Trash2 } from "lucide-react";
 import type { TaskDTO } from "./types";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Props = {
   taskDoc: TaskDTO;
+  isSelected: boolean;
+  onSelectionChange: (selected: boolean) => void;
+  onDelete: () => void;
 };
 
-export function TaskCard({ taskDoc }: Props) {
+export function TaskCard({
+  taskDoc,
+  isSelected,
+  onSelectionChange,
+  onDelete,
+}: Props) {
   const { toast } = useToast();
   const router = useRouter();
-  const { user } = useUser(); // 3. Get user
+  const { user } = useUser();
   const [isExporting, setIsExporting] = useState(false);
   const isNotionConnected = !!user?.notionWorkspaceName;
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // ... (handleExportToNotion function remains the same)
   const handleExportToNotion = async () => {
     setIsExporting(true);
     try {
@@ -77,6 +85,23 @@ export function TaskCard({ taskDoc }: Props) {
     }
   };
 
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await api.delete(`/api/v1/tasks/${taskDoc.id}`);
+      toast({ title: "Task deleted successfully" });
+      onDelete();
+    } catch (e: any) {
+      toast({
+        title: "Failed to delete task",
+        description: e.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const exportButton = (
     <Button
       onClick={handleExportToNotion}
@@ -98,52 +123,85 @@ export function TaskCard({ taskDoc }: Props) {
   );
 
   return (
-    <AccordionItem
-      value={taskDoc.id}
-      className="border rounded-lg px-4 bg-card"
-    >
-      {/* ... (AccordionTrigger and item list) */}
-      <AccordionTrigger className="hover:no-underline">
-        <div className="text-left">
-          <CardTitle>{taskDoc.title}</CardTitle>
-          <CardDescription className="mt-1">
-            Created{" "}
-            {formatDistanceToNow(new Date(taskDoc.createdAt), {
-              addSuffix: true,
-            })}
-          </CardDescription>
-        </div>
-      </AccordionTrigger>
-      <AccordionContent>
-        <p className="text-sm text-muted-foreground mb-4 whitespace-pre-line">
-          {taskDoc.description}
-        </p>
-        <ul className="space-y-2">
-          {taskDoc.items.map((item, index) => (
-            <li key={index} className="flex items-start gap-3">
-              <ListTodo className="h-4 w-4 mt-1 text-muted-foreground" />
-              <span className="flex-1 text-sm">{item}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-6 pt-4 border-t">
-          {/* 4. Wrap the button with Tooltip logic */}
-          {isNotionConnected ? (
-            exportButton
-          ) : (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>{exportButton}</span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Connect to Notion in your settings to export.</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
-      </AccordionContent>
-    </AccordionItem>
+    <div className="flex items-start gap-4">
+      {/* This wrapper ensures the checkbox aligns with the trigger's content */}
+      <Checkbox
+        checked={isSelected}
+        onCheckedChange={onSelectionChange}
+        aria-label={`Select task ${taskDoc.title}`}
+        className="mt-6"
+      />
+      <AccordionItem
+        value={taskDoc.id}
+        className="border rounded-lg bg-card flex-1"
+      >
+        <AccordionTrigger className="hover:no-underline px-4">
+          <div className="text-left">
+            <CardTitle>{taskDoc.title}</CardTitle>
+            <CardDescription className="mt-1">
+              Updated{" "}
+              {formatDistanceToNow(new Date(taskDoc.updatedAt), {
+                addSuffix: true,
+              })}
+            </CardDescription>
+          </div>
+        </AccordionTrigger>
+        <AccordionContent className="px-4 pb-4">
+          <p className="text-sm text-muted-foreground mb-4 whitespace-pre-line">
+            {taskDoc.description}
+          </p>
+          <ul className="space-y-2">
+            {taskDoc.items.map((item, index) => (
+              <li key={index} className="flex items-start gap-3">
+                <ListTodo className="h-4 w-4 mt-1 text-muted-foreground" />
+                <span className="flex-1 text-sm">{item}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-sm font-semibold text-muted-foreground mt-4">
+            Created: {format(new Date(taskDoc.createdAt), "PP")}
+          </p>
+          <div className="mt-2 pt-4 border-t flex items-center justify-between">
+            {isNotionConnected ? (
+              exportButton
+            ) : (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>{exportButton}</span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Connect to Notion in your settings to export.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/app/tasks/edit/${taskDoc.id}`)}
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="mr-2 h-4 w-4" />
+                )}
+                Delete
+              </Button>
+            </div>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+    </div>
   );
 }

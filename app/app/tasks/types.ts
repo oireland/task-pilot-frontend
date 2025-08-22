@@ -7,6 +7,7 @@ export interface TaskDTO {
   description: string;
   items: string[];
   createdAt: string;
+  updatedAt: string;
 }
 
 // Describes the paginated API response

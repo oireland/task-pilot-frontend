@@ -55,5 +55,6 @@ export const api = {
     fetcher(url, { method: "POST", body: formData }),
   put: (url: string, body: any) =>
     fetcher(url, { method: "PUT", body: JSON.stringify(body) }),
-  delete: (url: string) => fetcher(url, { method: "DELETE" }),
+  delete: (url: string, body?: any) =>
+    fetcher(url, { method: "DELETE", body: JSON.stringify(body) }),
 };

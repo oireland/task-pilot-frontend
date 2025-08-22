@@ -1,12 +1,13 @@
 // app/app/tasks/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import type { Page, TaskDTO } from "./types"; // Import shared types
-import { TaskCard } from "./task-card"; // Import the new component
+import type { Page, TaskDTO } from "./types";
+import { TaskCard } from "./task-card";
+import { DeleteConfirmationDialog } from "./delete-dialog";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,138 +19,194 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Accordion } from "@/components/ui/accordion";
-import { Loader2, Search, FileQuestion } from "lucide-react";
-
-// --- Component ---
+import { Loader2, Search, FileQuestion, Trash2 } from "lucide-react";
 
 export default function TasksPage() {
   const { toast } = useToast();
-
-  // --- State Management ---
   const [data, setData] = useState<Page<TaskDTO> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // --- Filtering and Sorting State ---
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [sort, setSort] = useState("createdAt,desc");
   const debouncedSearchTerm = useDebounce(searchTerm, 400);
 
-  // --- API Fetching ---
-  useEffect(() => {
-    const fetchTasks = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const params = new URLSearchParams({
-          page: page.toString(),
-          size: "10",
-          sort,
-        });
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-        if (debouncedSearchTerm) {
-          params.append("search", debouncedSearchTerm);
-        }
+  const fetchTasks = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        size: "10",
+        sort,
+      });
+      if (debouncedSearchTerm) params.append("search", debouncedSearchTerm);
 
-        const response = await api.get(`/api/v1/tasks?${params.toString()}`);
-        setData(response as Page<TaskDTO>);
-      } catch (err: any) {
-        setError("Failed to fetch tasks. Please try again later.");
-        toast({
-          title: "Error",
-          description: err?.message ?? "Could not fetch tasks.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTasks();
+      const response = await api.get(`/api/v1/tasks?${params.toString()}`);
+      setData(response as Page<TaskDTO>);
+    } catch (err: any) {
+      setError("Failed to fetch tasks. Please try again later.");
+      toast({
+        title: "Error",
+        description: err?.message ?? "Could not fetch tasks.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   }, [page, debouncedSearchTerm, sort, toast]);
 
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
+
+  const handleSelectionChange = (taskId: string, isSelected: boolean) => {
+    setSelectedIds((prev) => {
+      const newSet = new Set(prev);
+      if (isSelected) {
+        newSet.add(taskId);
+      } else {
+        newSet.delete(taskId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleBatchDelete = async () => {
+    try {
+      await api.delete("/api/v1/tasks/batch", {
+        body: Array.from(selectedIds),
+      });
+      toast({ title: "Tasks deleted successfully" });
+      setSelectedIds(new Set());
+      fetchTasks(); // Refresh the list
+    } catch (e: any) {
+      toast({
+        title: "Failed to delete tasks",
+        description: e.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
   const tasks = useMemo(() => data?.content ?? [], [data]);
+  const hasSelection = selectedIds.size > 0;
 
   return (
-    <div className="container mx-auto px-4 py-10 space-y-8">
-      {/* --- Header & Controls --- */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Your Tasks</h1>
-        <p className="text-muted-foreground">
-          View, search, and manage tasks extracted from your documents.
-        </p>
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by title or description..."
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+    <>
+      <div className="container mx-auto px-4 py-10 space-y-8">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Your Tasks</h1>
+          <p className="text-muted-foreground">
+            View, search, and manage tasks extracted from your documents.
+          </p>
         </div>
-        <Select value={sort} onValueChange={setSort}>
-          <SelectTrigger className="w-full md:w-[180px]">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="createdAt,desc">Newest First</SelectItem>
-            <SelectItem value="createdAt,asc">Oldest First</SelectItem>
-            <SelectItem value="title,asc">Title A-Z</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
 
-      {/* --- Content Area --- */}
-      <div>
-        {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by title or description..."
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-        ) : error ? (
-          <div className="text-center py-20 text-red-500">{error}</div>
-        ) : tasks.length === 0 ? (
-          <div className="text-center py-20 border-2 border-dashed rounded-lg">
-            <FileQuestion className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-semibold">No tasks found</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Upload a document on the App page to get started!
-            </p>
+          <div className="flex gap-2">
+            <Select value={sort} onValueChange={setSort}>
+              <SelectTrigger className="w-full md:w-[180px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="createdAt,desc">Newest First</SelectItem>
+                <SelectItem value="createdAt,asc">Oldest First</SelectItem>
+                <SelectItem value="updatedAt,desc">Recently Updated</SelectItem>
+                <SelectItem value="updatedAt,asc">
+                  Least Recently Updated
+                </SelectItem>
+                <SelectItem value="title,asc">Title A-Z</SelectItem>
+              </SelectContent>
+            </Select>
+            {hasSelection && (
+              <Button
+                variant="destructive"
+                onClick={() => setIsDeleteDialogOpen(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete ({selectedIds.size})
+              </Button>
+            )}
           </div>
-        ) : (
-          <Accordion type="single" collapsible className="w-full space-y-4">
-            {tasks.map((taskDoc) => (
-              <TaskCard key={taskDoc.id} taskDoc={taskDoc} />
-            ))}
-          </Accordion>
+        </div>
+
+        <div>
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-20 text-red-500">{error}</div>
+          ) : tasks.length === 0 ? (
+            <div className="text-center py-20 border-2 border-dashed rounded-lg">
+              <FileQuestion className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-4 text-lg font-semibold">No tasks found</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Upload a document on the App page to get started!
+              </p>
+            </div>
+          ) : (
+            <Accordion type="single" collapsible className="w-full space-y-4">
+              {tasks.map((taskDoc) => (
+                <TaskCard
+                  key={taskDoc.id}
+                  taskDoc={taskDoc}
+                  isSelected={selectedIds.has(taskDoc.id)}
+                  onSelectionChange={(isSelected) =>
+                    handleSelectionChange(taskDoc.id, isSelected)
+                  }
+                  onDelete={fetchTasks} // Pass the refresh function
+                />
+              ))}
+            </Accordion>
+          )}
+        </div>
+
+        {data && data.totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Page {data.number + 1} of {data.totalPages}
+            </span>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setPage((p) => Math.min(data.totalPages - 1, p + 1))
+              }
+              disabled={page >= data.totalPages - 1}
+            >
+              Next
+            </Button>
+          </div>
         )}
       </div>
 
-      {/* --- Pagination --- */}
-      {data && data.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            disabled={page === 0}
-          >
-            Previous
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {data.number + 1} of {data.totalPages}
-          </span>
-          <Button
-            variant="outline"
-            onClick={() => setPage((p) => Math.min(data.totalPages - 1, p + 1))}
-            disabled={page >= data.totalPages - 1}
-          >
-            Next
-          </Button>
-        </div>
-      )}
-    </div>
+      <DeleteConfirmationDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleBatchDelete}
+        itemCount={selectedIds.size}
+      />
+    </>
   );
 }
