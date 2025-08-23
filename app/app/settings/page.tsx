@@ -133,7 +133,7 @@ export default function SettingsPage() {
   const isFreePlan = plan?.name.toLowerCase() === "free";
 
   return (
-    <div className="space-y-6">
+    <div className="mt-2 mb-2 max-w-3xl mx-auto space-y-6">
       {/* Conditionally render the Notion settings or the connect prompt */}
       {isNotionConnected ? (
         <Card>
