@@ -1,16 +1,21 @@
 import { redirect } from "next/navigation";
-import VerifyForm from "@/app/(auth)/verify/verify-form"; // Your client component
+import VerifyForm from "@/app/(auth)/verify/verify-form";
 
 export default async function VerifyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  // Await searchParams before using
-  const params = await searchParams;
-  const email = typeof params?.email === "string" ? params.email : "";
+  const email =
+    typeof searchParams?.email === "string" ? searchParams.email : "";
+  const plan =
+    typeof searchParams?.plan === "string" ? searchParams.plan : undefined;
+  const interval =
+    typeof searchParams?.interval === "string"
+      ? searchParams.interval
+      : undefined;
 
-  // 2. Only perform the server-side check if an email was provided in the URL.
+  // This server-side check can remain to redirect already-verified users
   if (email) {
     let userEnabled = false;
     try {
@@ -28,6 +33,6 @@ export default async function VerifyPage({
     }
   }
 
-  // 3. Always render the form, passing the email (which may be empty).
-  return <VerifyForm initialEmail={email} />;
+  // Pass all necessary props to the client component
+  return <VerifyForm initialEmail={email} plan={plan} interval={interval} />;
 }

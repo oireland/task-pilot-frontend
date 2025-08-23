@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { z } from "zod";
 import {
@@ -40,6 +40,7 @@ type FieldErrors = Partial<Record<keyof SignupFormValues, string>>;
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
 
   const [values, setValues] = useState<SignupFormValues>({
@@ -122,7 +123,20 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await api.post("/api/v1/auth/signup", values);
-      router.push(`/verify?email=${values.email}`);
+
+      // After successful signup, redirect to verify, but keep the plan parameters
+      const plan = searchParams.get("plan");
+      const interval = searchParams.get("interval");
+
+      let redirectUrl = `/verify?email=${values.email}`;
+      if (plan) {
+        redirectUrl += `&plan=${plan}`;
+      }
+      if (interval) {
+        redirectUrl += `&interval=${interval}`;
+      }
+
+      router.push(redirectUrl);
     } catch (err: any) {
       toast({
         title: "Signup error",
