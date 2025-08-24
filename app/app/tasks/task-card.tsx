@@ -42,6 +42,7 @@ export function TaskCard({
   const { user } = useUser();
   const [isExporting, setIsExporting] = useState(false);
   const isNotionConnected = !!user?.notionWorkspaceName;
+  const isDatabaseSelected = !!user?.notionTargetDatabaseId;
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleExportToNotion = async () => {
@@ -162,7 +163,7 @@ export function TaskCard({
             Created: {format(new Date(taskDoc.createdAt), "PP")}
           </p>
           <div className="mt-2 pt-4 border-t flex items-center justify-between">
-            {isNotionConnected ? (
+            {isNotionConnected && isDatabaseSelected ? (
               exportButton
             ) : (
               <TooltipProvider>
@@ -171,7 +172,11 @@ export function TaskCard({
                     <span>{exportButton}</span>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Connect to Notion in your settings to export.</p>
+                    <p>
+                      {isNotionConnected
+                        ? "Select a target database in your settings to export."
+                        : "Connect to Notion in your settings to export."}
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

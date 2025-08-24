@@ -17,7 +17,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { FileUploader } from "@/components/file-uploader";
 import { TaskList } from "@/components/task-list";
-import { AlertTriangle, Clipboard, Loader2, Sparkles } from "lucide-react";
+import {
+  AlertTriangle,
+  Clipboard,
+  Loader2,
+  Save,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
@@ -37,19 +44,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-type Step = {
-  key: string;
-  label: string;
-  status: "idle" | "running" | "done" | "error";
-};
+import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 // Using 'items' to match our updated type definitions
-type ExtractedDocDataDTO = {
+type TaskDTO = {
+  id: number;
   title: string;
-  status: string;
   description: string;
   items: string[];
+  createdAt: string;
+  updatedAt: string;
 };
 
 export function AppPageClient() {
@@ -58,22 +64,24 @@ export function AppPageClient() {
   const router = useRouter();
 
   const isNotionConnected = !!user?.notionWorkspaceName;
+  const isDatabaseSelected = !!user?.notionTargetDatabaseId;
 
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
-  const [steps, setSteps] = useState<Step[]>([
-    { key: "parse", label: "Parsing document", status: "idle" },
-    { key: "extract", label: "Extracting items with AI", status: "idle" },
-  ]);
-  const [docData, setDocData] = useState<ExtractedDocDataDTO | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [docData, setDocData] = useState<TaskDTO | null>(null);
   const [mathMode, setMathMode] = useState(false);
   const [showSchemaErrorModal, setShowSchemaErrorModal] = useState(false);
 
   const resetState = () => {
     setDocData(null);
-    setSteps((s) => s.map((st) => ({ ...st, status: "idle" })));
+  };
+
+  const handleClear = () => {
+    resetState();
+    setFile(null);
   };
 
   const handleSubmit = async () => {
@@ -88,9 +96,6 @@ export function AppPageClient() {
 
     setIsProcessing(true);
     resetState();
-    setSteps([
-      { key: "process", label: "Processing document", status: "running" },
-    ]);
 
     try {
       const formData = new FormData();
@@ -103,9 +108,8 @@ export function AppPageClient() {
       );
 
       // Standardize on 'items' internally
-      const extractedData: ExtractedDocDataDTO = {
+      const extractedData: TaskDTO = {
         ...responseData,
-        items: responseData.tasks || [],
       };
 
       if (!extractedData.items || extractedData.items.length === 0) {
@@ -122,13 +126,7 @@ export function AppPageClient() {
       }
 
       setDocData(extractedData);
-      setSteps([
-        { key: "process", label: "Processing document", status: "done" },
-      ]);
     } catch (e: any) {
-      setSteps([
-        { key: "process", label: "Processing document", status: "error" },
-      ]);
       toast({
         title: "Processing failed",
         description: e?.message ?? "Unknown error",
@@ -193,6 +191,31 @@ export function AppPageClient() {
     }
   };
 
+  const handleUpdate = async () => {
+    if (!docData?.id) return;
+
+    setIsUpdating(true);
+    try {
+      await api.put(`/api/v1/tasks/${docData.id}`, {
+        title: docData.title,
+        description: docData.description,
+        items: docData.items,
+      });
+      toast({
+        title: "Success!",
+        description: "Your changes have been saved.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Error saving changes",
+        description: err.message || "An unknown error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const hasData = !!docData;
   const hasItems = !!docData && docData.items.length > 0;
 
@@ -242,7 +265,7 @@ export function AppPageClient() {
                 onCheckedChange={(v) => setMathMode(v === true)}
               />
               <Label htmlFor="math-mode" className="text-sm">
-                Contains math equations (slower)
+                Contains complex math equations (slower, more accurate)
               </Label>
             </div>
             <Button
@@ -257,34 +280,6 @@ export function AppPageClient() {
               )}
               Extract items
             </Button>
-            <Separator />
-            <div className="space-y-3">
-              <h4 className="text-sm font-medium">Pipeline</h4>
-              <ol className="space-y-2">
-                {steps.map((step) => (
-                  <li
-                    key={step.key}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <div className="flex items-center gap-2">
-                      <StepDot status={step.status} />
-                      <span>{step.label}</span>
-                    </div>
-                    <Badge
-                      variant={
-                        step.status === "done"
-                          ? "secondary"
-                          : step.status === "error"
-                          ? "destructive"
-                          : "outline"
-                      }
-                    >
-                      {step.status}
-                    </Badge>
-                  </li>
-                ))}
-              </ol>
-            </div>
           </CardContent>
         </Card>
 
@@ -300,17 +295,46 @@ export function AppPageClient() {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyToClipboard}
-                  disabled={!hasItems || isCopying}
-                  className="gap-2 bg-transparent"
-                >
-                  <Clipboard className="h-4 w-4" />
-                  <span>{isCopying ? "Copied!" : "Copy list"}</span>
-                </Button>
-                {isNotionConnected ? (
+                {/* Update and Copy buttons appear only when data is present */}
+                {hasData && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleClear}
+                      className="h-8 w-8"
+                    >
+                      <X className="h-4 w-4" />
+                      <span className="sr-only">Clear</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleUpdate}
+                      disabled={isUpdating}
+                      className="gap-2 bg-transparent"
+                    >
+                      {isUpdating ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
+                      <span>{isUpdating ? "Saving..." : "Update"}</span>
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyToClipboard}
+                      disabled={!hasItems || isCopying}
+                      className="gap-2 bg-transparent"
+                    >
+                      <Clipboard className="h-4 w-4" />
+                      <span>{isCopying ? "Copied!" : "Copy list"}</span>
+                    </Button>
+                  </>
+                )}
+                {isNotionConnected && isDatabaseSelected ? (
                   notionButton
                 ) : (
                   <TooltipProvider>
@@ -319,7 +343,11 @@ export function AppPageClient() {
                         <span>{notionButton}</span>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Connect to Notion in your settings to export.</p>
+                        <p>
+                          {isNotionConnected
+                            ? "Select a target database in your settings to export."
+                            : "Connect to Notion in your settings to export."}
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -331,14 +359,37 @@ export function AppPageClient() {
             {hasData ? (
               <>
                 <div className="space-y-1.5">
-                  <div className="text-sm text-gray-500">Title</div>
-                  <div className="text-base font-medium">{docData.title}</div>
+                  <Label htmlFor="doc-title" className="text-sm text-gray-500">
+                    Title
+                  </Label>
+                  <Input
+                    id="doc-title"
+                    className="text-base font-medium"
+                    value={docData.title}
+                    onChange={(e) =>
+                      setDocData((prev) =>
+                        prev ? { ...prev, title: e.target.value } : null
+                      )
+                    }
+                  />
                 </div>
                 <div className="space-y-1.5">
-                  <div className="text-sm text-gray-500">Description</div>
-                  <p className="text-sm text-gray-700 whitespace-pre-line">
-                    {docData.description}
-                  </p>
+                  <Label
+                    htmlFor="doc-description"
+                    className="text-sm text-gray-500"
+                  >
+                    Description
+                  </Label>
+                  <Textarea
+                    id="doc-description"
+                    className="text-sm text-gray-700 whitespace-pre-line"
+                    value={docData.description}
+                    onChange={(e) =>
+                      setDocData((prev) =>
+                        prev ? { ...prev, description: e.target.value } : null
+                      )
+                    }
+                  />
                 </div>
                 <Separator />
                 <div className="space-y-3">
@@ -347,7 +398,7 @@ export function AppPageClient() {
                   </div>
                   {hasItems ? (
                     <TaskList
-                      tasks={docData.items}
+                      items={docData.items}
                       onChange={(updated) =>
                         setDocData((prev) =>
                           prev ? { ...prev, items: updated } : prev
@@ -369,7 +420,6 @@ export function AppPageClient() {
           </CardContent>
         </Card>
       </div>
-
       <AlertDialog
         open={showSchemaErrorModal}
         onOpenChange={setShowSchemaErrorModal}
@@ -395,22 +445,5 @@ export function AppPageClient() {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  );
-}
-
-function StepDot({ status }: { status: Step["status"] }) {
-  const color =
-    status === "done"
-      ? "bg-emerald-600"
-      : status === "error"
-      ? "bg-red-600"
-      : status === "running"
-      ? "bg-amber-500"
-      : "bg-gray-300";
-  return (
-    <span
-      className={`inline-block h-2.5 w-2.5 rounded-full ${color}`}
-      aria-hidden="true"
-    />
   );
 }

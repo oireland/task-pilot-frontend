@@ -86,7 +86,7 @@ export function Navbar() {
                 href="/app"
                 className={cn(buttonVariants({ variant: "ghost" }))}
               >
-                App
+                AI
               </Link>
               <Link
                 href="/app/tasks"

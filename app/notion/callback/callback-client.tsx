@@ -49,7 +49,7 @@ export default function NotionCallbackClient() {
   }, [searchParams, router, error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen items-center justify-center bg-background">
       <Card className="w-full max-w-md text-center">
         <CardHeader>
           <CardTitle className="text-2xl">

@@ -19,10 +19,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Accordion } from "@/components/ui/accordion";
-import { Loader2, Search, FileQuestion, Trash2 } from "lucide-react";
+import { Loader2, Search, FileQuestion, Trash2, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function TasksPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [data, setData] = useState<Page<TaskDTO> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -100,11 +102,17 @@ export default function TasksPage() {
   return (
     <>
       <div className="container mx-auto px-4 py-10 space-y-8">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Your Tasks</h1>
-          <p className="text-muted-foreground">
-            View, search, and manage tasks extracted from your documents.
-          </p>
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight">Your Tasks</h1>
+            <p className="text-muted-foreground">
+              View, search, and manage tasks extracted from your documents.
+            </p>
+          </div>
+          <Button onClick={() => router.push("/app/tasks/create")}>
+            <Plus className="h-4 w-4" />
+            Create Task
+          </Button>
         </div>
 
         <div className="flex flex-col md:flex-row gap-4">

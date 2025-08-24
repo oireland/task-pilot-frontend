@@ -147,7 +147,7 @@ export default function EditTaskPage() {
           <div className="space-y-3">
             <Label>Items ({task.items.length})</Label>
             <TaskList
-              tasks={task.items}
+              items={task.items}
               onChange={(newItems) => setTask({ ...task, items: newItems })}
             />
           </div>

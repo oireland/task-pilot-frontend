@@ -8,7 +8,7 @@ import {
   useState,
   useCallback,
 } from "react";
-import { api } from "@/lib/api"; // 1. Import the api helper
+import { api } from "@/lib/api";
 
 export type User = {
   id?: number;
@@ -57,7 +57,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     setLoading(true);
     try {
-      // 2. Use the api.get method instead of fetch
       const data = await api.get("/api/v1/users/me");
       setUser(data as User);
     } catch (error) {

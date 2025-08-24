@@ -6,34 +6,34 @@ import { cn } from "@/lib/utils";
 import { Plus, X } from "lucide-react";
 
 type Props = {
-  tasks: string[];
+  items: string[];
   onChange?: (tasks: string[]) => void;
   editable?: boolean;
 };
 
-export function TaskList({ tasks, onChange, editable = true }: Props) {
+export function TaskList({ items, onChange, editable = true }: Props) {
   const handleUpdate = (index: number, value: string) => {
     if (!onChange) return;
-    const updated = [...tasks];
+    const updated = [...items];
     updated[index] = value;
     onChange(updated);
   };
 
   const handleRemove = (index: number) => {
     if (!onChange) return;
-    const updated = tasks.filter((_, i) => i !== index);
+    const updated = items.filter((_, i) => i !== index);
     onChange(updated);
   };
 
   const handleAdd = () => {
     if (!onChange) return;
-    onChange([...tasks, ""]);
+    onChange([...items, ""]);
   };
 
   if (!editable) {
     return (
       <ul className="list-disc pl-6 space-y-2 text-sm text-gray-700">
-        {tasks.map((t, i) => (
+        {items.map((t, i) => (
           <li key={i}>{t}</li>
         ))}
       </ul>
@@ -42,12 +42,12 @@ export function TaskList({ tasks, onChange, editable = true }: Props) {
 
   return (
     <div className="space-y-3">
-      {tasks.length === 0 && (
+      {items.length === 0 && (
         <div className="text-sm text-gray-500">
           No tasks found. Add tasks below.
         </div>
       )}
-      {tasks.map((t, i) => (
+      {items.map((t, i) => (
         <div
           key={i}
           className={cn(

@@ -266,7 +266,7 @@ export function AppDemo() {
                   Tasks ({docData.tasks.length})
                 </div>
                 <TaskList
-                  tasks={docData.tasks}
+                  items={docData.tasks}
                   // In the demo, we don't need to handle task changes
                   onChange={() => {}}
                 />
