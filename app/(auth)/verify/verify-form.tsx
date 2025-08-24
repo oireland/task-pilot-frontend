@@ -21,6 +21,7 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { api } from "@/lib/api";
+import { STRIPE_PRO_MONTHLY_LINK, STRIPE_PRO_YEARLY_LINK } from "@/lib/stripe";
 
 // Zod schema for verification form
 const VerifySchema = z.object({
@@ -35,7 +36,15 @@ type FieldErrors = Partial<Record<keyof VerifyFormValues, string>>;
 
 const RESEND_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
 
-export default function VerifyPage({ initialEmail }: { initialEmail: string }) {
+export default function VerifyForm({
+  initialEmail,
+  plan,
+  interval,
+}: {
+  initialEmail: string;
+  plan?: string;
+  interval?: string;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const { login } = useUser();
@@ -112,14 +121,27 @@ export default function VerifyPage({ initialEmail }: { initialEmail: string }) {
         title: "Email verified",
         description: "Your email has been successfully verified.",
       });
-      router.push("/app");
+
+      if (plan === "pro") {
+        const stripeUrl =
+          interval === "yearly"
+            ? STRIPE_PRO_YEARLY_LINK
+            : STRIPE_PRO_MONTHLY_LINK;
+        // Use window.location.href for external redirects
+        window.location.href = stripeUrl;
+      } else {
+        router.push("/app");
+      }
     } catch (err: any) {
       toast({
         title: "Verification error",
         description: err?.message ?? "Unknown error",
       });
     } finally {
-      setLoading(false);
+      // Don't set loading to false on successful redirect to avoid UI flicker
+      if (plan !== "pro") {
+        setLoading(false);
+      }
     }
   };
 

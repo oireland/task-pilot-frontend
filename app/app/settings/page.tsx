@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -26,6 +27,9 @@ import { useUser } from "@/hooks/use-user";
 import { ConnectNotion } from "./connect-notion";
 import { Progress } from "@/components/ui/progress";
 import { api } from "@/lib/api";
+import { STRIPE_PRO_MONTHLY_LINK, STRIPE_PRO_YEARLY_LINK } from "@/lib/stripe";
+import { Switch } from "@/components/ui/switch";
+import Link from "next/link";
 
 type NotionDatabase = {
   id: string;
@@ -47,6 +51,7 @@ export default function SettingsPage() {
   const [plan, setPlan] = useState<PlanDTO | null>(null);
   const [databases, setDatabases] = useState<NotionDatabase[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [isYearly, setIsYearly] = useState(false);
 
   const isNotionConnected = useMemo(() => !!user?.notionWorkspaceName, [user]);
 
@@ -122,8 +127,13 @@ export default function SettingsPage() {
     return null; // AuthGuard shows a loader
   }
 
+  const upgradeLink = isYearly
+    ? STRIPE_PRO_YEARLY_LINK
+    : STRIPE_PRO_MONTHLY_LINK;
+  const isFreePlan = plan?.name.toLowerCase() === "free";
+
   return (
-    <div className="space-y-6">
+    <div className="mt-2 mb-2 max-w-3xl mx-auto space-y-6">
       {/* Conditionally render the Notion settings or the connect prompt */}
       {isNotionConnected ? (
         <Card>
@@ -189,7 +199,7 @@ export default function SettingsPage() {
         <ConnectNotion />
       )}
 
-      {/* Plan & Usage is always visible */}
+      {/* Plan & Usage Card */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -231,11 +241,53 @@ export default function SettingsPage() {
                   {new Date(user.planRefreshDate).toLocaleDateString()}.
                 </div>
               )}
+
+              {/* --- Upgrade Section for Free Users --- */}
+              {isFreePlan && (
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="text-md font-semibold">Upgrade to Pro</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Unlock higher limits and priority support.
+                  </p>
+                  <div className="flex justify-center items-center gap-4">
+                    <Label htmlFor="billing-cycle">Monthly</Label>
+                    <Switch
+                      id="billing-cycle"
+                      checked={isYearly}
+                      onCheckedChange={setIsYearly}
+                      aria-label="Toggle billing cycle"
+                    />
+                    <Label htmlFor="billing-cycle">Yearly (Save 17%)</Label>
+                  </div>
+                  <Link
+                    target="_blank"
+                    className={buttonVariants({ className: "w-full" })}
+                    href={upgradeLink + "?prefilled_email=" + user.email}
+                  >
+                    Upgrade to Pro
+                  </Link>
+                </div>
+              )}
             </>
           ) : (
             <p className="text-sm text-red-600">Could not load plan details.</p>
           )}
         </CardContent>
+        {plan && !isFreePlan && (
+          <CardFooter>
+            <Link
+              target="_blank"
+              className={buttonVariants({
+                variant: "outline",
+                className: "w-full",
+              })}
+              href={process.env.NEXT_PUBLIC_STRIPE_PORTAL_LINK || ""}
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Manage Subscription
+            </Link>
+          </CardFooter>
+        )}
       </Card>
     </div>
   );
