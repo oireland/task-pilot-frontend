@@ -47,8 +47,8 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Using 'items' to match our updated type definitions
 type TaskDTO = {
   id: number;
   title: string;
@@ -66,7 +66,9 @@ export function AppPageClient() {
   const isNotionConnected = !!user?.notionWorkspaceName;
   const isDatabaseSelected = !!user?.notionTargetDatabaseId;
 
+  const [inputMode, setInputMode] = useState<"upload" | "paste">("upload");
   const [file, setFile] = useState<File | null>(null);
+  const [inputText, setInputText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
@@ -82,13 +84,31 @@ export function AppPageClient() {
   const handleClear = () => {
     resetState();
     setFile(null);
+    setInputText("");
   };
 
   const handleSubmit = async () => {
-    if (!file) {
+    let fileToProcess = file;
+
+    // If in paste mode, create a file from the text input
+    if (inputMode === "paste") {
+      if (!inputText.trim()) {
+        toast({
+          title: "No text provided",
+          description: "Please paste some text to process.",
+          variant: "destructive",
+        });
+        return;
+      }
+      fileToProcess = new File([inputText], "pasted-text.txt", {
+        type: "text/plain",
+      });
+    }
+
+    if (!fileToProcess) {
       toast({
-        title: "No file selected",
-        description: "Please choose a document to process.",
+        title: "No input provided",
+        description: "Please upload a file or paste text to continue.",
         variant: "destructive",
       });
       return;
@@ -99,7 +119,7 @@ export function AppPageClient() {
 
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", fileToProcess);
       formData.append("equations", String(mathMode));
 
       const responseData: any = await api.postForm(
@@ -151,8 +171,7 @@ export function AppPageClient() {
         title: "Notion page created!",
         description: `Created a checklist for “${docData.title}”.`,
       });
-      resetState();
-      setFile(null);
+      handleClear();
     } catch (e: any) {
       if (e.message.includes("invalid schema")) {
         setShowSchemaErrorModal(true);
@@ -218,6 +237,9 @@ export function AppPageClient() {
 
   const hasData = !!docData;
   const hasItems = !!docData && docData.items.length > 0;
+  const canSubmit =
+    (inputMode === "upload" && !!file) ||
+    (inputMode === "paste" && !!inputText.trim());
 
   const notionButton = (
     <Button
@@ -246,18 +268,46 @@ export function AppPageClient() {
       <div className="grid lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Upload document</CardTitle>
-            <CardDescription>PDF, DOCX, MD, or TXT</CardDescription>
+            <CardTitle>Provide Content</CardTitle>
+            <CardDescription>
+              Upload a file or paste text directly.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <FileUploader
-              value={file}
-              onChange={(f) => {
-                setFile(f);
-                resetState();
-              }}
-              accept={[".pdf", ".docx", ".txt", ".md"]}
-            />
+            <Tabs
+              value={inputMode}
+              onValueChange={(value) =>
+                setInputMode(value as "upload" | "paste")
+              }
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="upload">Upload File</TabsTrigger>
+                <TabsTrigger value="paste">Paste Text</TabsTrigger>
+              </TabsList>
+              <TabsContent value="upload" className="pt-4">
+                <FileUploader
+                  value={file}
+                  onChange={(f) => {
+                    setFile(f);
+                    setInputText(""); // Clear text input when a file is selected
+                    resetState();
+                  }}
+                  accept={[".pdf", ".docx", ".txt", ".md"]}
+                />
+              </TabsContent>
+              <TabsContent value="paste" className="pt-4">
+                <Textarea
+                  placeholder="Paste your content here..."
+                  className="h-32"
+                  value={inputText}
+                  onChange={(e) => {
+                    setInputText(e.target.value);
+                    setFile(null); // Clear file input when text is pasted
+                    resetState();
+                  }}
+                />
+              </TabsContent>
+            </Tabs>
             <div className="flex items-center gap-2">
               <Checkbox
                 id="math-mode"
@@ -271,7 +321,7 @@ export function AppPageClient() {
             <Button
               onClick={handleSubmit}
               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-              disabled={!file || isProcessing}
+              disabled={!canSubmit || isProcessing}
             >
               {isProcessing ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
