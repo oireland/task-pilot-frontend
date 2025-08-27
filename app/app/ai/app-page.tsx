@@ -265,6 +265,12 @@ export function AppPageClient() {
 
   return (
     <>
+      <div className="space-y-1 mb-3">
+        <h1 className="text-2xl font-bold tracking-tight">TaskPilot AI</h1>
+        <p className="text-muted-foreground">
+          Extract actionable todos from documents or text.
+        </p>
+      </div>
       <div className="grid lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1">
           <CardHeader>

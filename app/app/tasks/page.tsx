@@ -1,11 +1,10 @@
-// app/app/tasks/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import type { Page, TaskDTO } from "./types";
+import type { Page, TaskListDTO, TodoDTO } from "./types";
 import { TaskCard } from "./task-card";
 import { DeleteConfirmationDialog } from "./delete-dialog";
 
@@ -19,13 +18,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Accordion } from "@/components/ui/accordion";
-import { Loader2, Search, FileQuestion, Trash2, Plus } from "lucide-react";
+import {
+  Loader2,
+  Search,
+  FileQuestion,
+  Trash2,
+  Plus,
+  Sparkle,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function TasksPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [data, setData] = useState<Page<TaskDTO> | null>(null);
+  const [data, setData] = useState<Page<TaskListDTO> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
@@ -48,7 +54,7 @@ export default function TasksPage() {
       if (debouncedSearchTerm) params.append("search", debouncedSearchTerm);
 
       const response = await api.get(`/api/v1/tasks?${params.toString()}`);
-      setData(response as Page<TaskDTO>);
+      setData(response as Page<TaskListDTO>);
     } catch (err: any) {
       setError("Failed to fetch tasks. Please try again later.");
       toast({
@@ -77,11 +83,21 @@ export default function TasksPage() {
     });
   };
 
+  const handleTodoChange = (taskId: string, updatedTodos: TodoDTO[]) => {
+    // Update data for UI consistency
+    if (data) {
+      setData({
+        ...data,
+        content: data.content.map((task) =>
+          task.id === taskId ? { ...task, todos: updatedTodos } : task
+        ),
+      });
+    }
+  };
+
   const handleBatchDelete = async () => {
     try {
-      await api.delete("/api/v1/tasks/batch", {
-        body: Array.from(selectedIds),
-      });
+      await api.delete("/api/v1/tasks/batch", Array.from(selectedIds));
       toast({ title: "Tasks deleted successfully" });
       setSelectedIds(new Set());
       fetchTasks(); // Refresh the list
@@ -104,15 +120,21 @@ export default function TasksPage() {
       <div className="container mx-auto px-4 py-10 space-y-8">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Your Tasks</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Your Tasks</h1>
             <p className="text-muted-foreground">
               View, search, and manage tasks extracted from your documents.
             </p>
           </div>
-          <Button onClick={() => router.push("/app/tasks/create")}>
-            <Plus className="h-4 w-4" />
-            Create Task
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => router.push("/app/tasks/create")}>
+              <Plus className="h-4 w-4" />
+              Create Task
+            </Button>
+            <Button onClick={() => router.push("/app/ai")}>
+              <Sparkle className="h-4 w-4" />
+              Use AI
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-col md:flex-row gap-4">
@@ -152,7 +174,7 @@ export default function TasksPage() {
           </div>
         </div>
 
-        <div>
+        <div className="w-full">
           {loading ? (
             <div className="flex justify-center items-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -172,12 +194,13 @@ export default function TasksPage() {
               {tasks.map((taskDoc) => (
                 <TaskCard
                   key={taskDoc.id}
-                  taskDoc={taskDoc}
+                  task={taskDoc}
                   isSelected={selectedIds.has(taskDoc.id)}
                   onSelectionChange={(isSelected) =>
                     handleSelectionChange(taskDoc.id, isSelected)
                   }
-                  onDelete={fetchTasks} // Pass the refresh function
+                  onDelete={fetchTasks}
+                  onTodoChange={handleTodoChange}
                 />
               ))}
             </Accordion>

@@ -2,9 +2,15 @@ import type React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, FileText, ListTodo, Sparkles, Upload } from "lucide-react";
-import { Navbar } from "@/components/navbar";
-import { AppDemo } from "@/components/app-demo";
+import {
+  Check,
+  FileText,
+  ListTodo,
+  Sparkles,
+  Upload,
+  Clipboard,
+} from "lucide-react";
+import AppDemo from "@/components/app-demo";
 
 export default function LandingPage() {
   return (
@@ -12,7 +18,6 @@ export default function LandingPage() {
       <main>
         {/* Hero */}
         <section className="relative overflow-hidden">
-          {/* Light gradient overlay; dark gets a subtle tinted overlay */}
           <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/70 via-white to-white dark:from-emerald-900/10 dark:via-transparent dark:to-transparent pointer-events-none" />
           <div className="container mx-auto px-4 py-20 md:py-28 relative">
             <div className="grid lg:grid-cols-2 gap-10 items-center">
@@ -22,12 +27,12 @@ export default function LandingPage() {
                   New • TaskPilot Preview
                 </span>
                 <h1 className="mt-4 text-4xl md:text-6xl font-semibold tracking-tight">
-                  {"Turn documents into actionable Notion to‑dos"}
+                  Turn documents into actionable to‑dos
                 </h1>
                 <p className="mt-5 text-gray-600 dark:text-gray-300 text-lg md:text-xl">
-                  {
-                    "Upload a syllabus, handbook, or brief. TaskPilot extracts exercises and tasks with AI and drafts a tidy Notion checklist for you."
-                  }
+                  Upload a syllabus, handbook, or brief. TaskPilot extracts
+                  tasks and action items with AI—instantly draft a tidy
+                  checklist you can use anywhere.
                 </p>
                 <div className="mt-8 flex flex-col sm:flex-row gap-3">
                   <Button
@@ -43,7 +48,7 @@ export default function LandingPage() {
                     variant="outline"
                     className="dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-800 bg-transparent"
                   >
-                    <Link href="#demo">See a quick demo</Link>
+                    <Link href="#demo">Try the demo</Link>
                   </Button>
                 </div>
                 <div className="mt-6 text-sm text-gray-500 dark:text-gray-400">
@@ -70,7 +75,7 @@ export default function LandingPage() {
                         <ListTodo className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
                       </div>
                       <div className="font-medium">
-                        Create Notion to‑do list
+                        Get a ready-to-use checklist
                       </div>
                     </div>
                     <div className="mt-6 grid sm:grid-cols-2 gap-3">
@@ -82,7 +87,7 @@ export default function LandingPage() {
                         <ul className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
                           <li className="flex items-center gap-2">
                             <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
-                            {"Week 1: Read chapters 1–2"}
+                            Week 1: Read chapters 1–2
                           </li>
                           <li className="flex items-center gap-2">
                             <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
@@ -96,12 +101,13 @@ export default function LandingPage() {
                       </div>
                       <div className="rounded-md border p-3 dark:border-neutral-800 dark:bg-neutral-900/50">
                         <div className="text-sm font-medium">
-                          Notion Checklist
+                          Export anywhere
                         </div>
                         <div className="mt-3 text-sm text-gray-600 dark:text-gray-300">
-                          {"• Read chapters 1–2"}
-                          <br />• Submit intro assignment
-                          <br />• Set up project workspace
+                          • Copy to clipboard
+                          <br />
+                          • Export to Notion
+                          <br />• Use in your favorite app
                         </div>
                       </div>
                     </div>
@@ -130,27 +136,26 @@ export default function LandingPage() {
               }
             />
             <Feature
-              title="Notion ready"
-              description="Send tasks to a new Notion to‑do list in one click—titles, notes, and due dates included."
+              title="Export anywhere"
+              description="Copy your checklist, or send tasks to Notion in one click."
               icon={
-                <ListTodo className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
+                <Clipboard className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
               }
             />
           </div>
         </section>
 
-        {/* --- DEMO SECTION (NEW) --- */}
         <section id="demo" className="container mx-auto px-4 py-16">
           <div className="text-center">
             <h2 className="text-3xl md:text-4xl font-semibold">
-              See It in Action
+              Try It Instantly
             </h2>
             <p className="mt-3 max-w-2xl mx-auto text-gray-600 dark:text-gray-300">
-              Select a sample document below to see how Task Pilot extracts
-              tasks in just a few seconds. No signup required.
+              Select a sample file or paste text below to see how TaskPilot
+              extracts actionable to-dos. No signup required.
             </p>
           </div>
-          <div className="mt-10">
+          <div className="mt-10 max-w-6xl mx-auto">
             <AppDemo />
           </div>
         </section>
@@ -164,9 +169,8 @@ export default function LandingPage() {
                   Start turning documents into progress
                 </h2>
                 <p className="mt-2 text-gray-600 dark:text-gray-300">
-                  {
-                    "Sign up and try the mocked flow—no setup required. You can wire your AI and Notion later."
-                  }
+                  Sign up and try the full flow—no setup required. Export your
+                  checklist anywhere, or connect Notion for one-click sync.
                 </p>
               </div>
               <div className="flex gap-3 md:justify-end">
@@ -185,12 +189,6 @@ export default function LandingPage() {
                 </Button>
               </div>
             </div>
-            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-              {
-                "Prefer a structured task UI? Consider a Task component to show workflow progress with collapsible details."
-              }{" "}
-              [^1]
-            </p>
           </div>
         </section>
       </main>
@@ -226,3 +224,5 @@ function Feature({
     </div>
   );
 }
+
+// --- DEMO COMPONENT ---

@@ -107,7 +107,7 @@ function LoginContent() {
       if (from && from.startsWith("/")) {
         router.push(from);
       } else {
-        router.push("/app");
+        router.push("/app/tasks");
       }
     } catch (err: any) {
       toast({

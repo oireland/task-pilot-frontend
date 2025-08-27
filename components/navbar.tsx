@@ -83,7 +83,7 @@ export function Navbar() {
           <div className="flex items-center gap-4">
             <div>
               <Link
-                href="/app"
+                href="/app/ai"
                 className={cn(buttonVariants({ variant: "ghost" }))}
               >
                 AI
