@@ -130,7 +130,7 @@ export default function VerifyForm({
         // Use window.location.href for external redirects
         window.location.href = stripeUrl;
       } else {
-        router.push("/app");
+        router.push("/app/tasks");
       }
     } catch (err: any) {
       toast({

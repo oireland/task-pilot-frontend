@@ -18,7 +18,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Accordion } from "@/components/ui/accordion";
-import { Loader2, Search, FileQuestion, Trash2, Plus } from "lucide-react";
+import {
+  Loader2,
+  Search,
+  FileQuestion,
+  Trash2,
+  Plus,
+  Sparkle,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function TasksPage() {
@@ -113,15 +120,19 @@ export default function TasksPage() {
       <div className="container mx-auto px-4 py-10 space-y-8">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Your Tasks</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Your Tasks</h1>
             <p className="text-muted-foreground">
               View, search, and manage tasks extracted from your documents.
             </p>
           </div>
           <div className="flex gap-2">
             <Button onClick={() => router.push("/app/tasks/create")}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
               Create Task
+            </Button>
+            <Button onClick={() => router.push("/app/ai")}>
+              <Sparkle className="h-4 w-4" />
+              Use AI
             </Button>
           </div>
         </div>
