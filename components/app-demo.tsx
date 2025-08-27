@@ -1,49 +1,27 @@
 "use client";
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
-import { TaskList } from "@/components/task-list";
-import { Loader2, Notebook, Sparkles, FileText } from "lucide-react";
+import { Check, Sparkles, Clipboard, Loader2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { SampleFileSelector } from "./sample-file-selector";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Image from "next/image";
+import { SampleFileSelector } from "@/components/sample-file-selector";
 
-// --- Mock Data and Types ---
-
-type Step = {
-  key: string;
-  label: string;
-  status: "idle" | "running" | "done" | "error";
-};
-
-type ExtractedDocDataDTO = {
-  title: string;
-  status: string;
-  description: string;
-  tasks: string[];
-};
-
-const sampleDocs: Record<string, ExtractedDocDataDTO> = {
+const sampleDocs: Record<
+  string,
+  { title: string; description: string; tasks: string[] }
+> = {
   "Project_Phoenix_Kickoff.txt": {
     title: "Project Phoenix Kickoff",
-    status: "Not Started",
     description:
       "A project to revamp the customer onboarding experience, to be completed by Q4.",
     tasks: [
@@ -55,7 +33,6 @@ const sampleDocs: Record<string, ExtractedDocDataDTO> = {
   },
   "Calculus_Workshop_Exercises.txt": {
     title: "Calculus Workshop Exercises",
-    status: "Not Started",
     description:
       "A collection of exercises covering derivatives and integrals from the Calculus I workshop.",
     tasks: [
@@ -67,7 +44,6 @@ const sampleDocs: Record<string, ExtractedDocDataDTO> = {
   },
   "Onboarding_Checklist.docx": {
     title: "Onboarding Checklist",
-    status: "Not Started",
     description:
       "A checklist for onboarding a new software engineer to the team.",
     tasks: [
@@ -80,109 +56,134 @@ const sampleDocs: Record<string, ExtractedDocDataDTO> = {
   },
 };
 
-// --- Demo Component ---
-
-export function AppDemo() {
-  const { toast } = useToast();
+export default function AppDemo() {
+  const [inputMode, setInputMode] = useState<"upload" | "paste">("upload");
   const [selectedFile, setSelectedFile] = useState<string | undefined>(
     undefined
   );
+  const [file, setFile] = useState<File | null>(null);
+  const [inputText, setInputText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [steps, setSteps] = useState<Step[]>([
-    { key: "process", label: "Processing document", status: "idle" },
-  ]);
-  const [docData, setDocData] = useState<ExtractedDocDataDTO | null>(null);
+  const [tasks, setTasks] = useState<string[] | null>(null);
+  const [title, setTitle] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [mathMode, setMathMode] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const resetState = () => {
-    setDocData(null);
-    setSteps((s) => s.map((st) => ({ ...st, status: "idle" })));
-  };
-
-  // Helper function to simulate network delay
-  const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
-  const handleSubmit = async () => {
-    if (!selectedFile) {
-      toast({
-        title: "No file selected",
-        description: "Please choose a sample document to process.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleExtract = async () => {
     setIsProcessing(true);
-    resetState();
-    setSteps([
-      { key: "process", label: "Processing document", status: "running" },
-    ]);
+    setTasks(null);
+    setCopied(false);
 
-    try {
-      // Simulate API call delay
-      await wait(1500);
+    await new Promise((r) => setTimeout(r, 900));
 
-      const extractedData = sampleDocs[selectedFile];
-      setDocData(extractedData);
-
-      toast({
-        title: "Document extracted!",
-        description: `Found ${extractedData.tasks.length} tasks in "${selectedFile}".`,
-      });
-      setSteps([
-        { key: "process", label: "Processing document", status: "done" },
+    if (inputMode === "paste" && inputText.trim()) {
+      setTitle("Untitled Document");
+      setDescription("Pasted text");
+      setTasks([
+        "This is the first task",
+        "This is the second task",
+        "This is the third task",
       ]);
-    } catch (e: any) {
-      setSteps([
-        { key: "process", label: "Processing document", status: "error" },
-      ]);
-      toast({
-        title: "Something went wrong",
-        description: "This is a demo, but something went wrong.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
+    } else if (inputMode === "upload" && selectedFile) {
+      const doc = sampleDocs[selectedFile];
+      setTitle(doc.title);
+      setDescription(doc.description);
+      setTasks(doc.tasks);
+    } else {
+      setTitle("");
+      setDescription("");
+      setTasks([]);
     }
+    setIsProcessing(false);
   };
 
-  const handleCreateNotion = () => {
-    toast({
-      title: "This is a demo!",
-      description: "Sign up for a free account to create tasks in Notion.",
-    });
+  const handleCopy = async () => {
+    if (!tasks) return;
+    await navigator.clipboard.writeText(tasks.map((t) => `• ${t}`).join("\n"));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1200);
   };
-
-  const hasData = !!docData;
-  const hasTasks = !!docData && docData.tasks.length > 0;
 
   return (
-    <div className="grid lg:grid-cols-3 gap-6">
-      {/* --- Upload Card --- */}
-      <Card className="lg:col-span-1">
+    <div className="grid md:grid-cols-2 gap-8">
+      <Card>
         <CardHeader>
-          <CardTitle>Try the Demo</CardTitle>
+          <CardTitle>Try extracting tasks</CardTitle>
           <CardDescription>
-            Select a sample document to see Task Pilot in action.
+            Select a file or paste some text to see how it works.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Custom Select to look like FileUploader */}
-          <SampleFileSelector
-            value={selectedFile}
+          <Tabs
+            value={inputMode}
             onValueChange={(value) => {
-              setSelectedFile(value);
-              resetState();
+              setInputMode(value as "upload" | "paste");
+              setTasks(null);
+              setTitle("");
+              setDescription("");
             }}
-            options={Object.keys(sampleDocs).map((k) => ({
-              value: k,
-              label: k,
-            }))}
-          />
-
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="upload">Sample File</TabsTrigger>
+              <TabsTrigger value="paste">Paste Text</TabsTrigger>
+            </TabsList>
+            <TabsContent value="upload" className="pt-4">
+              <SampleFileSelector
+                value={selectedFile}
+                onValueChange={(value) => {
+                  setSelectedFile(value);
+                  setFile(null);
+                  setInputText("");
+                  setTasks(null);
+                  setTitle("");
+                  setDescription("");
+                }}
+                options={Object.keys(sampleDocs).map((k) => ({
+                  value: k,
+                  label: k,
+                }))}
+              />
+              {selectedFile && (
+                <div className="mt-2 text-xs text-gray-500">
+                  Selected: {selectedFile}
+                </div>
+              )}
+            </TabsContent>
+            <TabsContent value="paste" className="pt-4">
+              <Textarea
+                placeholder="Paste your content here..."
+                className="h-28"
+                value={inputText}
+                onChange={(e) => {
+                  setInputText(e.target.value);
+                  setFile(null);
+                  setSelectedFile(undefined);
+                  setTasks(null);
+                  setTitle("");
+                  setDescription("");
+                }}
+              />
+            </TabsContent>
+          </Tabs>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="math-mode-demo"
+              checked={mathMode}
+              onCheckedChange={(v) => setMathMode(v === true)}
+            />
+            <Label htmlFor="math-mode-demo" className="text-sm">
+              Contains complex math equations
+            </Label>
+          </div>
           <Button
-            onClick={handleSubmit}
+            onClick={handleExtract}
             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-            disabled={!selectedFile || isProcessing}
+            disabled={
+              isProcessing ||
+              (inputMode === "upload" && !selectedFile) ||
+              (inputMode === "paste" && !inputText.trim())
+            }
           >
             {isProcessing ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -191,113 +192,78 @@ export function AppDemo() {
             )}
             Extract tasks
           </Button>
-
-          <Separator />
-
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium">Pipeline</h4>
-            <ol className="space-y-2">
-              {steps.map((step) => (
-                <li
-                  key={step.key}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <div className="flex items-center gap-2">
-                    <StepDot status={step.status} />
-                    <span>{step.label}</span>
-                  </div>
-                  <Badge
-                    variant={
-                      step.status === "done"
-                        ? "secondary"
-                        : step.status === "error"
-                        ? "destructive"
-                        : "outline"
-                    }
-                  >
-                    {step.status}
-                  </Badge>
-                </li>
-              ))}
-            </ol>
-          </div>
         </CardContent>
       </Card>
-
-      {/* --- Results Card --- */}
-      <Card className="lg:col-span-2">
+      <Card>
         <CardHeader>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <CardTitle>Extracted document</CardTitle>
-              <CardDescription>
-                {hasData
-                  ? "Review the title, description, and tasks"
-                  : "No data yet"}
-              </CardDescription>
-            </div>
-            <Button
-              variant="outline"
-              onClick={handleCreateNotion}
-              disabled={!hasTasks}
-              className="gap-2 bg-transparent"
-            >
-              <Notebook className="h-4 w-4" />
-              Create in Notion
-            </Button>
-          </div>
+          <CardTitle>Extracted document</CardTitle>
+          <CardDescription>
+            Copy your checklist or export to Notion.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-5">
-          {hasData ? (
-            <>
-              <div className="space-y-1.5">
-                <div className="text-sm text-gray-500">Title</div>
-                <div className="text-base font-medium">{docData.title}</div>
-              </div>
-              <div className="space-y-1.5">
-                <div className="text-sm text-gray-500">Description</div>
-                <p className="text-sm text-gray-700 whitespace-pre-line">
-                  {docData.description}
-                </p>
-              </div>
-              <Separator />
-              <div className="space-y-3">
-                <div className="text-sm font-medium">
-                  Tasks ({docData.tasks.length})
+        <CardContent>
+          {tasks ? (
+            tasks.length > 0 ? (
+              <div>
+                <div className="space-y-1.5 mb-4">
+                  <div className="text-sm text-gray-500">Title</div>
+                  <div className="text-base font-medium">{title}</div>
                 </div>
-                <TaskList
-                  items={docData.tasks}
-                  // In the demo, we don't need to handle task changes
-                  onChange={() => {}}
-                />
+                <div className="space-y-1.5 mb-4">
+                  <div className="text-sm text-gray-500">Description</div>
+                  <p className="text-sm text-gray-700 whitespace-pre-line">
+                    {description}
+                  </p>
+                </div>
+                <ul className="mb-4 space-y-2">
+                  {tasks.map((task, i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+                      {task}
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopy}
+                    className="gap-2"
+                  >
+                    <Clipboard className="h-4 w-4" />
+                    {copied ? "Copied!" : "Copy list"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    disabled
+                  >
+                    <Image
+                      src="/icons/notion-logo.svg"
+                      alt="Notion Logo"
+                      width={16}
+                      height={16}
+                    />
+                    Export to Notion
+                  </Button>
+                </div>
+                <div className="mt-2 text-xs text-gray-500">
+                  Notion export available after signup.
+                </div>
               </div>
-            </>
+            ) : (
+              <div className="text-sm text-gray-500">
+                No tasks found in your document.
+              </div>
+            )
           ) : (
             <div className="text-sm text-gray-500 text-center py-10">
-              Select a sample document and click "Extract tasks" to see the
-              results.
+              Extracted tasks will appear here.
             </div>
           )}
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-// --- Helper Components ---
-function StepDot({ status }: { status: Step["status"] }) {
-  const color =
-    status === "done"
-      ? "bg-emerald-600"
-      : status === "error"
-      ? "bg-red-600"
-      : status === "running"
-      ? "bg-amber-500"
-      : "bg-gray-300";
-  return (
-    <span
-      className={`inline-block h-2.5 w-2.5 rounded-full ${color}`}
-      aria-hidden="true"
-    />
   );
 }

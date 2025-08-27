@@ -53,8 +53,10 @@ export const api = {
     fetcher(url, { method: "POST", body: JSON.stringify(body) }),
   postForm: (url: string, formData: FormData) =>
     fetcher(url, { method: "POST", body: formData }),
-  put: (url: string, body: any) =>
+  put: (url: string, body?: any) =>
     fetcher(url, { method: "PUT", body: JSON.stringify(body) }),
+  patch: (url: string, body?: any) =>
+    fetcher(url, { method: "PATCH", body: JSON.stringify(body) }),
   delete: (url: string, body?: any) =>
     fetcher(url, { method: "DELETE", body: JSON.stringify(body) }),
 };

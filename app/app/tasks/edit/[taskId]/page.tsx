@@ -1,170 +1,343 @@
-// app/app/tasks/edit/[taskId]/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
-
-import { api } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import type { TaskDTO } from "../../types";
-
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { TaskList } from "@/components/task-list";
-import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { X, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { TaskListDTO, TodoDTO } from "../../types";
+import { api } from "@/lib/api";
+import { DateTimePicker } from "@/components/date-time-picker";
 
 export default function EditTaskPage() {
-  const router = useRouter();
+  // Use the useParams hook to get route parameters
   const params = useParams();
-  const { toast } = useToast();
-
   const taskId = params.taskId as string;
 
-  const [task, setTask] = useState<TaskDTO | null>(null);
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [showScrollDownIndicator, setShowScrollDownIndicator] = useState(false);
+  const [showScrollUpIndicator, setShowScrollUpIndicator] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [todos, setTodos] = useState<
+    Array<{
+      id?: string;
+      content: string;
+      checked: boolean;
+      deadline?: Date | string;
+    }>
+  >([]);
+
+  // Check if content is scrollable
+  useEffect(() => {
+    const checkScrollIndicators = () => {
+      if (contentRef.current) {
+        const { scrollHeight, clientHeight, scrollTop } = contentRef.current;
+        const isScrollable = scrollHeight > clientHeight;
+        const isAtBottom = scrollTop >= scrollHeight - clientHeight - 10;
+        const isAtTop = scrollTop <= 10;
+
+        // Only show down indicator if not at bottom and content is scrollable
+        setShowScrollDownIndicator(isScrollable && !isAtBottom);
+
+        // Only show up indicator if not at top and has been scrolled down
+        setShowScrollUpIndicator(isScrollable && !isAtTop);
+      }
+    };
+
+    checkScrollIndicators();
+
+    // Re-check when todos change
+    const observer = new ResizeObserver(checkScrollIndicators);
+    if (contentRef.current) {
+      observer.observe(contentRef.current);
+      contentRef.current.addEventListener("scroll", checkScrollIndicators);
+    }
+
+    window.addEventListener("resize", checkScrollIndicators);
+
+    return () => {
+      if (contentRef.current) {
+        contentRef.current.removeEventListener("scroll", checkScrollIndicators);
+      }
+      observer.disconnect();
+      window.removeEventListener("resize", checkScrollIndicators);
+    };
+  }, [todos, loading]);
 
   useEffect(() => {
-    if (!taskId) return;
-
     const fetchTask = async () => {
       try {
         setLoading(true);
-        const data = await api.get(`/api/v1/tasks/${taskId}`);
-        setTask(data as TaskDTO);
-      } catch (err) {
-        setError("Failed to load task. It may have been deleted.");
-        toast({
-          title: "Error",
-          description: "Could not fetch the requested task.",
-          variant: "destructive",
-        });
+        const taskList: TaskListDTO = await api.get(`/api/v1/tasks/${taskId}`);
+
+        setTitle(taskList.title);
+        setDescription(taskList.description);
+
+        // Convert ISO string deadlines to Date objects
+        const formattedTodos = taskList.todos?.length
+          ? taskList.todos.map((todo) => ({
+              ...todo,
+              deadline: todo.deadline ? new Date(todo.deadline) : undefined,
+            }))
+          : [{ content: "", checked: false }];
+
+        setTodos(formattedTodos);
+      } catch (error) {
+        console.error("Error fetching task:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTask();
+    if (taskId) {
+      fetchTask();
+    }
   }, [taskId]);
 
-  const handleSave = async () => {
-    if (!task) return;
+  const addTodo = () => {
+    setTodos([...todos, { content: "", checked: false }]);
+  };
 
-    setIsSaving(true);
+  const removeTodo = (index: number) => {
+    setTodos(todos.filter((_, i) => i !== index));
+  };
+
+  const updateTodoContent = (index: number, content: string) => {
+    const newTodos = [...todos];
+    newTodos[index].content = content;
+    setTodos(newTodos);
+  };
+
+  const updateTodoChecked = (index: number, checked: boolean) => {
+    const newTodos = [...todos];
+    newTodos[index].checked = checked;
+    setTodos(newTodos);
+  };
+
+  const updateTodoDeadline = (index: number, deadline: Date | undefined) => {
+    const newTodos = [...todos];
+    newTodos[index].deadline = deadline;
+    setTodos(newTodos);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Filter out empty todos
+    const validTodos = todos.filter((todo) => todo.content.trim() !== "");
+
+    // Convert Date objects to ISO strings for API
+    const todosForApi = validTodos.map((todo) => ({
+      ...todo,
+      deadline:
+        todo.deadline instanceof Date
+          ? todo.deadline.toISOString()
+          : todo.deadline,
+    }));
+
     try {
-      await api.put(`/api/v1/tasks/${task.id}`, {
-        title: task.title,
-        description: task.description,
-        items: task.items,
+      await api.put(`/api/v1/tasks/${taskId}`, {
+        title,
+        description,
+        todos: todosForApi,
       });
-      toast({
-        title: "Success!",
-        description: "Your changes have been saved.",
-      });
+
       router.push("/app/tasks");
-    } catch (err: any) {
-      toast({
-        title: "Error saving changes",
-        description: err.message || "An unknown error occurred.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
+      router.refresh();
+    } catch (error) {
+      console.error("Error updating task:", error);
     }
   };
 
-  const handleCancel = () => {
-    router.push("/app/tasks");
+  // Scroll handlers
+  const scrollToBottom = () => {
+    if (contentRef.current) {
+      contentRef.current.scrollTo({
+        top: contentRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  const scrollToTop = () => {
+    if (contentRef.current) {
+      contentRef.current.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
   };
 
   if (loading) {
-    return (
-      <div className="flex h-[calc(100vh-10rem)] w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (error || !task) {
-    return (
-      <div className="container mx-auto px-4 py-10 text-center">
-        <h2 className="text-xl font-semibold text-destructive">{error}</h2>
-        <Button
-          variant="outline"
-          className="mt-4"
-          onClick={() => router.push("/app/tasks")}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Tasks
-        </Button>
-      </div>
-    );
+    return <div className="p-8 text-center">Loading...</div>;
   }
 
   return (
-    <div className="container mx-auto px-4 py-10">
-      <Card className="max-w-3xl mx-auto">
-        <CardHeader>
+    <div className="max-w-5xl mx-auto p-4 h-[calc(100vh-6rem)]">
+      <Card className="flex flex-col h-full">
+        <CardHeader className="flex-shrink-0">
           <CardTitle>Edit Task</CardTitle>
-          <CardDescription>
-            Modify the details of your task document below.
-          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              value={task.title}
-              onChange={(e) => setTask({ ...task, title: e.target.value })}
-              placeholder="Enter a title for your document"
-            />
+
+        {/* Scrollable content area with custom scrollbar */}
+        <CardContent
+          ref={contentRef}
+          className="flex-grow overflow-y-auto pr-2 custom-scrollbar relative"
+        >
+          <form id="task-form" onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <label
+                htmlFor="title"
+                className="block font-medium text-base md:text-lg"
+              >
+                Title
+              </label>
+              <Input
+                id="title"
+                className="text-sm md:text-base"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="description"
+                className="block font-medium text-base md:text-lg"
+              >
+                Description
+              </label>
+              <Textarea
+                id="description"
+                className="text-sm md:text-base"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <label className="block font-medium text-base md:text-lg">
+                  To-Do Items
+                </label>
+                <Button
+                  type="button"
+                  onClick={addTodo}
+                  size="sm"
+                  variant="outline"
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Add Item
+                </Button>
+              </div>
+
+              {todos.map((todo, index) => (
+                <div
+                  key={index}
+                  className="flex flex-col border rounded-md overflow-hidden"
+                >
+                  {/* Single responsive layout for both mobile and desktop */}
+                  <div className="flex flex-row items-start gap-2 p-3 border-b">
+                    <Checkbox
+                      checked={todo.checked}
+                      onCheckedChange={(checked) =>
+                        updateTodoChecked(index, checked === true)
+                      }
+                      className="flex-shrink-0 mt-2"
+                    />
+                    <Textarea
+                      value={todo.content}
+                      onChange={(e) => updateTodoContent(index, e.target.value)}
+                      placeholder="Todo item"
+                      className="flex-1 text-sm md:text-base min-h-[60px] resize-none"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeTodo(index)}
+                      className="flex-shrink-0 mt-1"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {/* Date picker */}
+                  <div className="p-3">
+                    <DateTimePicker
+                      date={
+                        todo.deadline instanceof Date
+                          ? todo.deadline
+                          : undefined
+                      }
+                      setDate={(date) => updateTodoDeadline(index, date)}
+                    />
+                  </div>
+                </div>
+              ))}
+              <Button
+                type="button"
+                onClick={addTodo}
+                size="sm"
+                variant="outline"
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-1" /> Add Item
+              </Button>
+            </div>
+          </form>
+
+          {/* Scroll indicators */}
+          <div className="fixed left-8 bottom-15 md:left-auto md:right-8 md:bottom-24 flex flex-col gap-1 md:gap-2 pointer-events-auto">
+            {showScrollUpIndicator && (
+              <button
+                onClick={scrollToTop}
+                className="rounded-full p-2 bg-primary/10 hover:bg-primary/20 shadow-sm transition-colors"
+                aria-label="Scroll to top"
+              >
+                <ChevronUp className="h-5 w-5 text-primary" />
+              </button>
+            )}
+            {showScrollDownIndicator && (
+              <button
+                onClick={scrollToBottom}
+                className="rounded-full p-2 bg-primary/10 hover:bg-primary/20 shadow-sm transition-colors"
+                aria-label="Scroll to bottom"
+              >
+                <ChevronDown className="h-5 w-5 text-primary" />
+              </button>
+            )}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={task.description}
-              onChange={(e) =>
-                setTask({ ...task, description: e.target.value })
-              }
-              placeholder="Enter a short description"
-              rows={3}
-            />
-          </div>
-          <Separator />
-          <div className="space-y-3">
-            <Label>Items ({task.items.length})</Label>
-            <TaskList
-              items={task.items}
-              onChange={(newItems) => setTask({ ...task, items: newItems })}
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={handleCancel}>
+        </CardContent>
+
+        {/* Fixed footer */}
+        <CardFooter className="flex-shrink-0 border-t mt-auto">
+          <div className="flex justify-end gap-2 w-full">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+            >
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="mr-2 h-4 w-4" />
-              )}
+            <Button type="submit" form="task-form">
               Save Changes
             </Button>
           </div>
-        </CardContent>
+        </CardFooter>
       </Card>
     </div>
   );
