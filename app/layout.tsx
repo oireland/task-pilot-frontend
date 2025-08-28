@@ -1,5 +1,9 @@
 import { UserProvider } from "@/hooks/use-user";
 import { ThemeProvider } from "@/components/theme-provider";
+import "../styles/globals.css";
+import { ReactNode } from "react";
+import { Navbar } from "@/components/navbar";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -21,11 +25,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     </html>
   );
 }
-
-import "../styles/globals.css";
-import { ReactNode } from "react";
-import { Navbar } from "@/components/navbar";
-import { Toaster } from "@/components/ui/toaster";
 
 export const metadata = {
   title: "TaskPilot",

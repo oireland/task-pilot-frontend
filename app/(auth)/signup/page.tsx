@@ -18,8 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle2, CircleAlert, Eye, EyeOff, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 // Zod rules: length, digit, special character
 const PasswordSchema = z
@@ -41,7 +41,6 @@ type FieldErrors = Partial<Record<keyof SignupFormValues, string>>;
 function SignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
 
   const [values, setValues] = useState<SignupFormValues>({
     email: "",
@@ -113,8 +112,7 @@ function SignupContent() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate(values)) {
-      toast({
-        title: "Fix form errors",
+      toast("Fix form errors", {
         description: "Please correct the highlighted fields and try again.",
       });
       return;
@@ -138,10 +136,7 @@ function SignupContent() {
 
       router.push(redirectUrl);
     } catch (err: any) {
-      toast({
-        title: "Signup error",
-        description: err?.message ?? "Unknown error",
-      });
+      toast("Signup error", { description: err?.message ?? "Unknown error" });
     } finally {
       setLoading(false);
     }

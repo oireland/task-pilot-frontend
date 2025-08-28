@@ -18,10 +18,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, RefreshCw } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { api } from "@/lib/api";
 import { STRIPE_PRO_MONTHLY_LINK, STRIPE_PRO_YEARLY_LINK } from "@/lib/stripe";
+import { toast } from "sonner";
 
 // Zod schema for verification form
 const VerifySchema = z.object({
@@ -46,7 +46,6 @@ export default function VerifyForm({
   interval?: string;
 }) {
   const router = useRouter();
-  const { toast } = useToast();
   const { login } = useUser();
 
   const [values, setValues] = useState<VerifyFormValues>({
@@ -105,8 +104,7 @@ export default function VerifyForm({
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate(values)) {
-      toast({
-        title: "Fix form errors",
+      toast("Fix form errors", {
         description: "Please correct the highlighted fields and try again.",
       });
       return;
@@ -117,8 +115,7 @@ export default function VerifyForm({
       const { token } = await api.post("/api/v1/auth/verify", values);
       login(token); // Assumes login function from useUser hook
 
-      toast({
-        title: "Email verified",
+      toast("Email verified", {
         description: "Your email has been successfully verified.",
       });
 
@@ -133,9 +130,8 @@ export default function VerifyForm({
         router.push("/app/tasks");
       }
     } catch (err: any) {
-      toast({
-        title: "Verification error",
-        description: err?.message ?? "Unknown error",
+      toast.error("Verification error", {
+        description: err?.message ?? "Failed to verify email.",
       });
     } finally {
       // Don't set loading to false on successful redirect to avoid UI flicker
@@ -148,16 +144,14 @@ export default function VerifyForm({
   const handleResend = async () => {
     if (!values.email) {
       setErrors((e) => ({ ...e, email: "Please enter your email address." }));
-      toast({
-        title: "Enter email",
+      toast.error("Enter email", {
         description: "Please enter your email to resend the code.",
       });
       return;
     }
 
     if (secondsLeft > 0) {
-      toast({
-        title: "Please wait",
+      toast("Please wait", {
         description: `You can resend a code in ${secondsLeft}s.`,
       });
       return;
@@ -171,14 +165,12 @@ export default function VerifyForm({
       setResendUntil(until);
       localStorage.setItem(cooldownKey(values.email), String(until));
 
-      toast({
-        title: "Code sent",
+      toast("Code sent", {
         description: "A new verification code has been emailed to you.",
       });
     } catch (err: any) {
-      toast({
-        title: "Resend error",
-        description: err?.message ?? "Unknown error",
+      toast.error("Resend error", {
+        description: err?.message ?? "Failed to resend email.",
       });
     } finally {
       setResending(false);

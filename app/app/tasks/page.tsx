@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { api } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
 import type { Page, TaskListDTO, TodoDTO } from "./types";
 import { TaskCard } from "./task-card";
 import { DeleteConfirmationDialog } from "./delete-dialog";
@@ -27,9 +26,9 @@ import {
   Sparkle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function TasksPage() {
-  const { toast } = useToast();
   const router = useRouter();
   const [data, setData] = useState<Page<TaskListDTO> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,10 +56,8 @@ export default function TasksPage() {
       setData(response as Page<TaskListDTO>);
     } catch (err: any) {
       setError("Failed to fetch tasks. Please try again later.");
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: err?.message ?? "Could not fetch tasks.",
-        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -98,14 +95,12 @@ export default function TasksPage() {
   const handleBatchDelete = async () => {
     try {
       await api.delete("/api/v1/tasks/batch", Array.from(selectedIds));
-      toast({ title: "Tasks deleted successfully" });
+      toast("Tasks deleted successfully");
       setSelectedIds(new Set());
       fetchTasks(); // Refresh the list
     } catch (e: any) {
-      toast({
-        title: "Failed to delete tasks",
-        description: e.message,
-        variant: "destructive",
+      toast.error("Failed to delete tasks",
+        {description: e.message,
       });
     } finally {
       setIsDeleteDialogOpen(false);
@@ -118,7 +113,7 @@ export default function TasksPage() {
   return (
     <>
       <div className="container mx-auto px-4 py-10 space-y-8">
-        <div className="flex items-center justify-between">
+        <div className="block md:flex space-y-2 md:space-y-0 items-center justify-between">
           <div className="space-y-2">
             <h1 className="text-2xl font-bold tracking-tight">Your Tasks</h1>
             <p className="text-muted-foreground">
