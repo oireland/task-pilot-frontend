@@ -22,7 +22,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Crown, Database, ExternalLink, Loader2, Save } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { ConnectNotion } from "./connect-notion";
 import { Progress } from "@/components/ui/progress";
@@ -30,6 +29,7 @@ import { api } from "@/lib/api";
 import { STRIPE_PRO_MONTHLY_LINK, STRIPE_PRO_YEARLY_LINK } from "@/lib/stripe";
 import { Switch } from "@/components/ui/switch";
 import Link from "next/link";
+import { toast } from "sonner";
 
 type NotionDatabase = {
   id: string;
@@ -44,7 +44,6 @@ type PlanDTO = {
 
 export default function SettingsPage() {
   const { user, refreshUser } = useUser();
-  const { toast } = useToast();
   const router = useRouter();
 
   const [selectedId, setSelectedId] = useState<string | undefined>();
@@ -84,10 +83,8 @@ export default function SettingsPage() {
         setDatabases(dbData as NotionDatabase[]);
       } catch (error) {
         console.error(error);
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: "Could not load your settings data.",
-          variant: "destructive",
         });
       } finally {
         setLoadingData(false);
@@ -109,16 +106,13 @@ export default function SettingsPage() {
         databaseId: selectedDb.id,
         databaseName: selectedDb.name,
       });
-      toast({
-        title: "Default database saved",
+      toast("Default database saved", {
         description: `New tasks will be created in “${selectedDb.name}”.`,
       });
       await refreshUser();
     } catch (error: any) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Could not save your selected database.",
-        variant: "destructive",
       });
     }
   };

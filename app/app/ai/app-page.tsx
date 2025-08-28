@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { FileUploader } from "@/components/file-uploader";
 import { TaskList } from "@/components/task-list";
@@ -48,18 +47,10 @@ import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-type TaskDTO = {
-  id: number;
-  title: string;
-  description: string;
-  items: string[];
-  createdAt: string;
-  updatedAt: string;
-};
+import { TaskListDTO, TodoDTO } from "../tasks/types";
+import { toast } from "sonner";
 
 export function AppPageClient() {
-  const { toast } = useToast();
   const { user } = useUser();
   const router = useRouter();
 
@@ -73,12 +64,34 @@ export function AppPageClient() {
   const [isCreating, setIsCreating] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [docData, setDocData] = useState<TaskDTO | null>(null);
+
+  // Split state to reduce re-renders
+  const [taskList, setTaskList] = useState<TaskListDTO | null>(null);
+  const [todosList, setTodosList] = useState<TodoDTO[]>([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+
   const [mathMode, setMathMode] = useState(false);
   const [showSchemaErrorModal, setShowSchemaErrorModal] = useState(false);
 
+  // Sync state between taskList and individual pieces
+  useEffect(() => {
+    if (taskList) {
+      setTodosList(taskList.todos || []);
+      setTitle(taskList.title || "");
+      setDescription(taskList.description || "");
+    } else {
+      setTodosList([]);
+      setTitle("");
+      setDescription("");
+    }
+  }, [taskList?.id]);
+
   const resetState = () => {
-    setDocData(null);
+    setTaskList(null);
+    setTodosList([]);
+    setTitle("");
+    setDescription("");
   };
 
   const handleClear = () => {
@@ -93,10 +106,8 @@ export function AppPageClient() {
     // If in paste mode, create a file from the text input
     if (inputMode === "paste") {
       if (!inputText.trim()) {
-        toast({
-          title: "No text provided",
+        toast.error("No text provided", {
           description: "Please paste some text to process.",
-          variant: "destructive",
         });
         return;
       }
@@ -106,10 +117,8 @@ export function AppPageClient() {
     }
 
     if (!fileToProcess) {
-      toast({
-        title: "No input provided",
+      toast.error("No input provided", {
         description: "Please upload a file or paste text to continue.",
-        variant: "destructive",
       });
       return;
     }
@@ -127,30 +136,25 @@ export function AppPageClient() {
         formData
       );
 
-      // Standardize on 'items' internally
-      const extractedData: TaskDTO = {
-        ...responseData,
-      };
+      // Set the task list data
+      setTaskList(responseData);
+      setTodosList(responseData.todos || []);
+      setTitle(responseData.title || "");
+      setDescription(responseData.description || "");
 
-      if (!extractedData.items || extractedData.items.length === 0) {
-        toast({
-          title: "No items found",
+      if (!responseData.todos || responseData.todos.length === 0) {
+        toast("No todos found", {
           description:
-            "The AI could not identify any actionable items in the document.",
+            "The AI could not identify any actionable todos in the document.",
         });
       } else {
-        toast({
-          title: "Document extracted",
-          description: `Found and saved ${extractedData.items.length} items.`,
+        toast("Document extracted", {
+          description: `Found and saved ${responseData.todos.length} items.`,
         });
       }
-
-      setDocData(extractedData);
     } catch (e: any) {
-      toast({
-        title: "Processing failed",
+      toast.error("Processing failed", {
         description: e?.message ?? "Unknown error",
-        variant: "destructive",
       });
     } finally {
       setIsProcessing(false);
@@ -158,29 +162,19 @@ export function AppPageClient() {
   };
 
   const handleCreateNotion = async () => {
-    if (!docData) return;
+    if (!taskList?.id) return;
     setIsCreating(true);
     try {
-      // Map 'items' back to 'tasks' for the API request
-      const payload = {
-        ...docData,
-        tasks: docData.items,
-      };
-      await api.post("/api/v1/notion/pages", payload);
-      toast({
-        title: "Notion page created!",
-        description: `Created a checklist for “${docData.title}”.`,
+      await api.post(`/api/v1/notion/taskList/${taskList.id}`);
+      toast("Notion page created!", {
+        description: `Created a task list for "${title}".`,
       });
       handleClear();
     } catch (e: any) {
       if (e.message.includes("invalid schema")) {
         setShowSchemaErrorModal(true);
       } else {
-        toast({
-          title: "Failed to create Notion page",
-          description: e.message,
-          variant: "destructive",
-        });
+        toast.error("Failed to create Notion page", { description: e.message });
       }
     } finally {
       setIsCreating(false);
@@ -188,21 +182,33 @@ export function AppPageClient() {
   };
 
   const handleCopyToClipboard = async () => {
-    if (!docData?.items || docData.items.length === 0) return;
+    if (!todosList || todosList.length === 0) return;
     setIsCopying(true);
     try {
-      const formattedItems = docData.items
-        .map((item) => `• ${item}`)
-        .join("\n");
-      await navigator.clipboard.writeText(formattedItems);
-      toast({
-        title: "Items copied to clipboard!",
-      });
+      // 1. Format the todos into a clean, readable string.
+      const formattedTodos = todosList
+        .map((todo) => {
+          // Set the checkbox symbol based on the 'checked' status.
+          const checkbox = todo.checked ? "✅" : "⬜️";
+
+          // Format the optional deadline.
+          const deadlineText = todo.deadline
+            ? ` | Due: ${new Date(todo.deadline).toLocaleDateString()}`
+            : "";
+
+          return `${checkbox} ${todo.content}${deadlineText}`;
+        })
+        .join("\n"); // Join each todo item with a new line.
+
+      // 2. Combine the title, description, and todos into the final text.
+      const clipboardText = `${title}\n${description}\n\n${formattedTodos}`;
+
+      // 3. Use the modern Clipboard API to copy the text.
+      await navigator.clipboard.writeText(clipboardText);
+      toast("Items copied to clipboard!");
     } catch (err: any) {
-      toast({
-        title: "Failed to copy",
+      toast.error("Failed to copy", {
         description: "Could not copy items to clipboard.",
-        variant: "destructive",
       });
     } finally {
       // Add a small delay to show the checkmark
@@ -211,32 +217,75 @@ export function AppPageClient() {
   };
 
   const handleUpdate = async () => {
-    if (!docData?.id) return;
+    if (!taskList?.id) return;
 
     setIsUpdating(true);
     try {
-      await api.put(`/api/v1/tasks/${docData.id}`, {
-        title: docData.title,
-        description: docData.description,
-        items: docData.items,
+      await api.put(`/api/v1/tasks/${taskList.id}`, {
+        title,
+        description,
+        todos: todosList,
       });
-      toast({
-        title: "Success!",
-        description: "Your changes have been saved.",
-      });
+      toast("Success!", { description: "Your changes have been saved." });
     } catch (err: any) {
-      toast({
-        title: "Error saving changes",
+      toast.error("Error saving changes", {
         description: err.message || "An unknown error occurred.",
-        variant: "destructive",
       });
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const hasData = !!docData;
-  const hasItems = !!docData && docData.items.length > 0;
+  // Handle title changes with debouncing
+  const [titleTimeout, setTitleTimeout] = useState<NodeJS.Timeout | null>(null);
+  const handleTitleChange = useCallback(
+    (value: string) => {
+      setTitle(value);
+
+      if (titleTimeout) clearTimeout(titleTimeout);
+
+      const timeout = setTimeout(() => {
+        setTaskList((prev) => (prev ? { ...prev, title: value } : null));
+      }, 500);
+
+      setTitleTimeout(timeout);
+    },
+    [titleTimeout]
+  );
+
+  // Handle description changes with debouncing
+  const [descTimeout, setDescTimeout] = useState<NodeJS.Timeout | null>(null);
+  const handleDescriptionChange = useCallback(
+    (value: string) => {
+      setDescription(value);
+
+      if (descTimeout) clearTimeout(descTimeout);
+
+      const timeout = setTimeout(() => {
+        setTaskList((prev) => (prev ? { ...prev, description: value } : null));
+      }, 500);
+
+      setDescTimeout(timeout);
+    },
+    [descTimeout]
+  );
+
+  // Memoized todos change handler
+  const handleTodosChange = useCallback((updated: TodoDTO[]) => {
+    setTodosList(updated);
+    setTaskList((prev) => (prev ? { ...prev, todos: updated } : null));
+  }, []);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (titleTimeout) clearTimeout(titleTimeout);
+      if (descTimeout) clearTimeout(descTimeout);
+    };
+  }, [titleTimeout, descTimeout]);
+
+  const hasData = !!taskList;
+  const hasTodos = todosList.length > 0;
   const canSubmit =
     (inputMode === "upload" && !!file) ||
     (inputMode === "paste" && !!inputText.trim());
@@ -246,7 +295,7 @@ export function AppPageClient() {
       variant="outline"
       size="sm"
       onClick={handleCreateNotion}
-      disabled={!hasItems || isCreating || !isNotionConnected}
+      disabled={!hasTodos || isCreating || !isNotionConnected}
       className="gap-2 bg-transparent"
     >
       {isCreating ? (
@@ -382,7 +431,7 @@ export function AppPageClient() {
                       variant="outline"
                       size="sm"
                       onClick={handleCopyToClipboard}
-                      disabled={!hasItems || isCopying}
+                      disabled={!hasTodos || isCopying}
                       className="gap-2 bg-transparent"
                     >
                       <Clipboard className="h-4 w-4" />
@@ -421,12 +470,8 @@ export function AppPageClient() {
                   <Input
                     id="doc-title"
                     className="text-base font-medium"
-                    value={docData.title}
-                    onChange={(e) =>
-                      setDocData((prev) =>
-                        prev ? { ...prev, title: e.target.value } : null
-                      )
-                    }
+                    value={title}
+                    onChange={(e) => handleTitleChange(e.target.value)}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -439,28 +484,17 @@ export function AppPageClient() {
                   <Textarea
                     id="doc-description"
                     className="text-sm text-gray-700 whitespace-pre-line"
-                    value={docData.description}
-                    onChange={(e) =>
-                      setDocData((prev) =>
-                        prev ? { ...prev, description: e.target.value } : null
-                      )
-                    }
+                    value={description}
+                    onChange={(e) => handleDescriptionChange(e.target.value)}
                   />
                 </div>
                 <Separator />
                 <div className="space-y-3">
                   <div className="text-sm font-medium">
-                    Items ({docData.items.length})
+                    Tasks ({todosList.length})
                   </div>
-                  {hasItems ? (
-                    <TaskList
-                      items={docData.items}
-                      onChange={(updated) =>
-                        setDocData((prev) =>
-                          prev ? { ...prev, items: updated } : prev
-                        )
-                      }
-                    />
+                  {hasTodos ? (
+                    <TaskList todos={todosList} onChange={handleTodosChange} />
                   ) : (
                     <p className="text-sm text-gray-500">
                       No items were found in this document.

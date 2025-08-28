@@ -17,9 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 const LoginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -31,7 +31,6 @@ type FieldErrors = Partial<Record<keyof LoginFormValues, string>>;
 
 function LoginContent() {
   const router = useRouter();
-  const { toast } = useToast();
   const { login } = useUser();
   const searchParams = useSearchParams();
 
@@ -91,8 +90,7 @@ function LoginContent() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate(values) || !canSubmit) {
-      toast({
-        title: "Fix form errors",
+      toast("Fix form errors", {
         description: "Please correct the highlighted fields and try again.",
       });
       return;
@@ -110,8 +108,7 @@ function LoginContent() {
         router.push("/app/tasks");
       }
     } catch (err: any) {
-      toast({
-        title: "Login error",
+      toast("Login error", {
         description: err?.message ?? "Unknown error",
       });
     } finally {

@@ -49,7 +49,7 @@ async function fetcher(url: string, options: RequestInit = {}) {
 // An object that exports convenient methods for each HTTP verb
 export const api = {
   get: (url: string) => fetcher(url, { method: "GET" }),
-  post: (url: string, body: any) =>
+  post: (url: string, body?: any) =>
     fetcher(url, { method: "POST", body: JSON.stringify(body) }),
   postForm: (url: string, formData: FormData) =>
     fetcher(url, { method: "POST", body: formData }),

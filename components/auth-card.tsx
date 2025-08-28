@@ -1,74 +1,91 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useEffect, useMemo, useState } from "react"
-import Link from "next/link"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { useToast } from "@/hooks/use-toast"
-import { Loader2, CheckCircle2, CircleAlert } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Loader2, CheckCircle2, CircleAlert } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type Props = {
-  title: string
-  subtitle?: string
-  submitLabel: string
-  altAction: { href: string; label: string }
-  onSubmit: (values: { email: string; password: string }) => Promise<void>
+  title: string;
+  subtitle?: string;
+  submitLabel: string;
+  altAction: { href: string; label: string };
+  onSubmit: (values: { email: string; password: string }) => Promise<void>;
   // Return an array of error messages for each failing password rule
-  validatePassword?: (password: string) => string[]
+  validatePassword?: (password: string) => string[];
   // Return true if the form (email+password) is valid
-  validateForm?: (values: { email: string; password: string }) => boolean
-}
+  validateForm?: (values: { email: string; password: string }) => boolean;
+};
 
-export function AuthCard({ title, subtitle, submitLabel, altAction, onSubmit, validatePassword, validateForm }: Props) {
-  const { toast } = useToast()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [passwordErrors, setPasswordErrors] = useState<string[]>([])
+export function AuthCard({
+  title,
+  subtitle,
+  submitLabel,
+  altAction,
+  onSubmit,
+  validatePassword,
+  validateForm,
+}: Props) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
 
   // Recompute password errors as the user types if a validator is provided
   useEffect(() => {
-    if (!validatePassword) return
-    setPasswordErrors(validatePassword(password))
-  }, [password, validatePassword])
+    if (!validatePassword) return;
+    setPasswordErrors(validatePassword(password));
+  }, [password, validatePassword]);
 
   const allPasswordRulesPass = useMemo(
-    () => (validatePassword ? passwordErrors.length === 0 && password.length > 0 : true),
-    [passwordErrors, password, validatePassword],
-  )
+    () =>
+      validatePassword
+        ? passwordErrors.length === 0 && password.length > 0
+        : true,
+    [passwordErrors, password, validatePassword]
+  );
 
   const isFormValid = useMemo(() => {
-    if (validateForm) return validateForm({ email, password })
-    if (validatePassword) return allPasswordRulesPass && email.length > 0
-    return email.length > 0 && password.length > 0
-  }, [validateForm, validatePassword, allPasswordRulesPass, email, password])
+    if (validateForm) return validateForm({ email, password });
+    if (validatePassword) return allPasswordRulesPass && email.length > 0;
+    return email.length > 0 && password.length > 0;
+  }, [validateForm, validatePassword, allPasswordRulesPass, email, password]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!isFormValid) {
-      toast({
-        title: "Fix form errors",
+      toast("Fix form errors", {
         description: "Please satisfy the form requirements before continuing.",
-      })
-      return
+      });
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
-      await onSubmit({ email, password })
+      await onSubmit({ email, password });
     } catch (e: any) {
-      toast({ title: "Action failed", description: e?.message ?? "Unknown error" })
+      toast.error("Action failed", {
+        description: e?.message ?? "Something went wrong.",
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
@@ -101,14 +118,17 @@ export function AuthCard({ title, subtitle, submitLabel, altAction, onSubmit, va
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                aria-describedby={validatePassword ? "password-rules" : undefined}
+                aria-describedby={
+                  validatePassword ? "password-rules" : undefined
+                }
                 autoComplete="new-password"
               />
               {validatePassword && (
                 <div id="password-rules" className="mt-2">
                   {password.length === 0 ? (
                     <div className="text-xs text-gray-500">
-                      Enter a password and we’ll show which requirements are unmet.
+                      Enter a password and we’ll show which requirements are
+                      unmet.
                     </div>
                   ) : allPasswordRulesPass ? (
                     <div className="flex items-center gap-2 text-xs text-emerald-700">
@@ -118,7 +138,10 @@ export function AuthCard({ title, subtitle, submitLabel, altAction, onSubmit, va
                   ) : (
                     <ul className="space-y-1">
                       {passwordErrors.map((msg, i) => (
-                        <li key={i} className="flex items-start gap-2 text-xs text-red-600">
+                        <li
+                          key={i}
+                          className="flex items-start gap-2 text-xs text-red-600"
+                        >
                           <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                           <span>{msg}</span>
                         </li>
@@ -155,12 +178,15 @@ export function AuthCard({ title, subtitle, submitLabel, altAction, onSubmit, va
 
           <div className="text-sm text-gray-600">
             <span className="mr-2">Want something else?</span>
-            <Link href={altAction.href} className={cn("text-emerald-700 hover:underline")}>
+            <Link
+              href={altAction.href}
+              className={cn("text-emerald-700 hover:underline")}
+            >
               {altAction.label}
             </Link>
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
