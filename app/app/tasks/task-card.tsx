@@ -212,15 +212,16 @@ export function TaskCard({
 
   // Get the task status badge
   const getTaskStatusBadge = () => {
+    // Base classes for consistent styling
+    const baseClasses =
+      "flex items-center justify-center w-24 h-6 text-xs flex-shrink-0";
+
     // Priority order: Overdue > Completed > In Progress
     if (hasOverdueTodos) {
       return (
-        <Badge
-          variant="destructive"
-          className="flex items-center md:gap-1 text-xs flex-shrink-0"
-        >
-          <Clock className="h-3 w-3" />
-          <span className="hidden md:inline-block">Overdue</span>
+        <Badge variant="destructive" className={cn(baseClasses)}>
+          <Clock className="h-3 w-3 mr-1.5" />
+          <span>Overdue</span>
         </Badge>
       );
     }
@@ -229,10 +230,13 @@ export function TaskCard({
       return (
         <Badge
           variant="outline"
-          className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300 dark:border-green-700 flex items-center md:gap-1 text-xs flex-shrink-0"
+          className={cn(
+            baseClasses,
+            "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300 dark:border-green-700"
+          )}
         >
-          <CheckCircle2 className="h-3 w-3" />
-          <span className="hidden md:inline-block">Completed</span>
+          <CheckCircle2 className="h-3 w-3 mr-1.5" />
+          <span>Completed</span>
         </Badge>
       );
     }
@@ -241,14 +245,18 @@ export function TaskCard({
       return (
         <Badge
           variant="outline"
-          className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border-blue-300 dark:border-blue-700 flex items-center md:gap-1 text-xs flex-shrink-0"
+          className={cn(
+            baseClasses,
+            "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border-blue-300 dark:border-blue-700"
+          )}
         >
-          <AlertCircle className="h-3 w-3" />
-          <span className="hidden md:inline-block">In Progress</span>
+          <AlertCircle className="h-3 w-3 mr-1.5" />
+          <span>In Progress</span>
         </Badge>
       );
     }
 
+    // Return a placeholder badge to maintain layout consistency
     return null;
   };
 
