@@ -217,7 +217,7 @@ export function TaskCard({
       return (
         <Badge
           variant="destructive"
-          className="flex items-center md:gap-1 text-xs"
+          className="flex items-center md:gap-1 text-xs flex-shrink-0"
         >
           <Clock className="h-3 w-3" />
           <span className="hidden md:inline-block">Overdue</span>
@@ -229,7 +229,7 @@ export function TaskCard({
       return (
         <Badge
           variant="outline"
-          className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300 dark:border-green-700 flex items-center md:gap-1 text-xs"
+          className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300 dark:border-green-700 flex items-center md:gap-1 text-xs flex-shrink-0"
         >
           <CheckCircle2 className="h-3 w-3" />
           <span className="hidden md:inline-block">Completed</span>
@@ -241,7 +241,7 @@ export function TaskCard({
       return (
         <Badge
           variant="outline"
-          className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border-blue-300 dark:border-blue-700 flex items-center md:gap-1 text-xs"
+          className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border-blue-300 dark:border-blue-700 flex items-center md:gap-1 text-xs flex-shrink-0"
         >
           <AlertCircle className="h-3 w-3" />
           <span className="hidden md:inline-block">In Progress</span>
@@ -258,8 +258,8 @@ export function TaskCard({
         value={task.id}
         className="border rounded-lg overflow-hidden w-full group"
       >
-        <div className="flex items-center justify-between w-full gap-x-4 px-4">
-          <div className="flex flex-1 items-baseline gap-x-4 ">
+        <div className="flex items-baseline justify-between w-full gap-x-4 px-4">
+          <div className="flex flex-1 items-baseline gap-x-4 overflow-hidden">
             {onSelectionChange && (
               <Checkbox
                 checked={isSelected}
@@ -270,27 +270,32 @@ export function TaskCard({
                 )}
               />
             )}
-            <AccordionTriggerNoChevron className="flex-1 hover:no-underline py-4 cursor-pointer rounded-md">
+            <AccordionTriggerNoChevron className="flex-1 hover:no-underline py-4 cursor-pointer rounded-md overflow-hidden">
               <div className="flex flex-col items-start text-left w-full">
-                <div className="flex items-center gap-2">
-                  <div className="font-medium text-sm md:text-lg">
+                <div className="flex flex-wrap items-center gap-2 w-full">
+                  <div className="font-medium text-lg md:text-xl break-all mr-2">
                     {task.title}
                   </div>
-                  <div>
+                  <div className="flex-shrink-0 ml-auto">
                     {/* Single status badge based on priority */}
                     {getTaskStatusBadge()}
                   </div>
                 </div>
-                <p className="text-xs md:text-sm text-muted-foreground line-clamp-1 group-data-[state=open]:line-clamp-none">
+                <p className="text-md md:text-lg text-muted-foreground line-clamp-1 group-data-[state=open]:line-clamp-none break-all w-full">
                   {task.description}
                 </p>
               </div>
             </AccordionTriggerNoChevron>
           </div>
-          <div className="flex-shrink-0">
+          <div
+            className={cn(
+              "flex-shrink-0 relative translate-y-0.5",
+              task.description && "translate-y-1"
+            )}
+          >
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="flex-shrink-0">
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -305,7 +310,7 @@ export function TaskCard({
                   Export to Notion
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleCopyToClipboard}>
-                  <Clipboard className="h-4 w-4" />
+                  <Clipboard className="h-4 w-4 mr-2" />
                   Copy list
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleEdit}>
@@ -344,21 +349,26 @@ export function TaskCard({
                       onCheckedChange={() => handleTodoToggle(todo.id)}
                       disabled={loadingTodoIds.has(todo.id)}
                       id={`todo-${todo.id}`}
-                      className="relative translate-y-0.5 size-3.5"
+                      className="relative translate-y-0.5 size-3.5 flex-shrink-0"
                     />
-                    <label
-                      htmlFor={`todo-${todo.id}`}
-                      className={`flex-grow ${
-                        todo.checked ? "line-through text-muted-foreground" : ""
-                      } ${loadingTodoIds.has(todo.id) ? "opacity-50" : ""}`}
-                    >
-                      {todo.content}
-                    </label>
-                    {todo.deadline && (
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(todo.deadline).toLocaleDateString()}
-                      </span>
-                    )}
+                    <div className="flex flex-col md:flex-row md:justify-between w-full">
+                      <label
+                        htmlFor={`todo-${todo.id}`}
+                        className={cn(
+                          "flex-grow break-all text-base",
+                          todo.checked && "line-through text-muted-foreground",
+                          loadingTodoIds.has(todo.id) && "opacity-50"
+                        )}
+                      >
+                        {todo.content}
+                      </label>
+                      {todo.deadline && (
+                        <span className="text-sm flex items-center gap-1 text-muted-foreground flex-shrink-0">
+                          <Clock className="w-3 h-3" />
+                          {new Date(todo.deadline).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))
               )}
