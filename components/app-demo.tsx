@@ -8,11 +8,13 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Check, Sparkles, Clipboard, Loader2 } from "lucide-react";
+import { Check, Sparkles, Clipboard, Loader2, X, Save } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import { SampleFileSelector } from "@/components/sample-file-selector";
 
@@ -105,13 +107,24 @@ export default function AppDemo() {
     setTimeout(() => setCopied(false), 1200);
   };
 
+  const handleClear = () => {
+    setTasks(null);
+    setTitle("");
+    setDescription("");
+    setInputText("");
+    setSelectedFile(undefined);
+  };
+
+  const hasData = !!tasks;
+  const hasTasks = tasks && tasks.length > 0;
+
   return (
-    <div className="grid md:grid-cols-2 gap-8">
-      <Card>
+    <div className="grid lg:grid-cols-3 gap-4 md:gap-6">
+      <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle>Try extracting tasks</CardTitle>
           <CardDescription>
-            Select a file or paste some text to see how it works.
+            Select a file or paste text to see how it works.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -194,69 +207,118 @@ export default function AppDemo() {
           </Button>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="lg:col-span-2">
         <CardHeader>
-          <CardTitle>Extracted document</CardTitle>
-          <CardDescription>
-            Copy your checklist or export to Notion.
-          </CardDescription>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <CardTitle>Extracted document</CardTitle>
+              <CardDescription>
+                {hasData
+                  ? "Review the title, description, and tasks"
+                  : "No data yet"}
+              </CardDescription>
+            </div>
+            {hasData && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleClear}
+                  className="h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Clear</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled
+                  className="gap-2 bg-transparent"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>Save</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopy}
+                  disabled={!hasTasks}
+                  className="gap-2 bg-transparent"
+                >
+                  <Clipboard className="h-4 w-4" />
+                  <span>{copied ? "Copied!" : "Copy list"}</span>
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
-        <CardContent>
-          {tasks ? (
-            tasks.length > 0 ? (
-              <div>
-                <div className="space-y-1.5 mb-4">
-                  <div className="text-sm text-gray-500">Title</div>
-                  <div className="text-base font-medium">{title}</div>
+        <CardContent className="space-y-5">
+          {hasData ? (
+            <>
+              <div className="space-y-1.5">
+                <Label htmlFor="doc-title" className="text-sm text-gray-500">
+                  Title
+                </Label>
+                <Input
+                  id="doc-title"
+                  className="text-base font-medium"
+                  value={title}
+                  readOnly
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="doc-description"
+                  className="text-sm text-gray-500"
+                >
+                  Description
+                </Label>
+                <Textarea
+                  id="doc-description"
+                  className="text-sm text-gray-700 whitespace-pre-line"
+                  value={description}
+                  readOnly
+                />
+              </div>
+              <Separator />
+              <div className="space-y-3">
+                <div className="text-sm font-medium">
+                  Tasks ({tasks?.length || 0})
                 </div>
-                <div className="space-y-1.5 mb-4">
-                  <div className="text-sm text-gray-500">Description</div>
-                  <p className="text-sm text-gray-700 whitespace-pre-line">
-                    {description}
+                {hasTasks ? (
+                  <div className="space-y-2">
+                    {tasks.map((task, i) => (
+                      <div
+                        key={i}
+                        className="flex items-baseline gap-2 p-2 border rounded-md"
+                      >
+                        <Checkbox checked={false} disabled className="mt-0.5" />
+                        <div className="flex-grow text-sm">{task}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    No items were found in this document.
                   </p>
-                </div>
-                <ul className="mb-4 space-y-2">
-                  {tasks.map((task, i) => (
-                    <li key={i} className="flex items-center gap-2 text-sm">
-                      <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
-                      {task}
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCopy}
-                    className="gap-2"
-                  >
-                    <Clipboard className="h-4 w-4" />
-                    {copied ? "Copied!" : "Copy list"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    disabled
-                  >
-                    <Image
-                      src="/icons/notion-logo.svg"
-                      alt="Notion Logo"
-                      width={16}
-                      height={16}
-                    />
-                    Export to Notion
-                  </Button>
-                </div>
+                )}
+              </div>
+              <div className="mt-4 border-t pt-4">
+                <Button variant="outline" size="sm" className="gap-2" disabled>
+                  <Image
+                    src="/icons/notion-logo.svg"
+                    alt="Notion Logo"
+                    width={16}
+                    height={16}
+                    className="w-[16px] h-[16px]"
+                  />
+                  Export to Notion
+                </Button>
                 <div className="mt-2 text-xs text-gray-500">
                   Notion export available after signup.
                 </div>
               </div>
-            ) : (
-              <div className="text-sm text-gray-500">
-                No tasks found in your document.
-              </div>
-            )
+            </>
           ) : (
             <div className="text-sm text-gray-500 text-center py-10">
               Extracted tasks will appear here.

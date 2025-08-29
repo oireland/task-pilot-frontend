@@ -88,31 +88,36 @@ export function SampleFileSelector({
         <SelectTrigger
           id={id}
           className={cn(
-            "mt-4 w-full rounded-2xl border-2 border-dashed border-muted-foreground/30 p-10",
-            "min-h-[220px] text-center focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
+            "mt-4 w-full rounded-xl border-2 border-dashed border-muted-foreground/30 p-4 sm:p-6 md:p-10",
+            "min-h-[140px] md:min-h-[180px] text-center focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
             "bg-background shadow-none",
             // Center content column and hide built-in chevron/icon
-            "flex flex-col items-center justify-center gap-0 [&>span:last-child]:hidden"
+            "flex flex-col items-center justify-center gap-0  [&>svg]:hidden"
           )}
         >
-          <span className="inline-flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-50">
-            <Upload className="h-6 w-6 text-emerald-700" aria-hidden />
+          <span className="inline-flex h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 items-center justify-center rounded-xl bg-emerald-50">
+            <Upload
+              className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-emerald-700"
+              aria-hidden
+            />
           </span>
 
-          <div className="mt-6 space-y-2">
+          <div className="mt-3 md:mt-6 space-y-1 sm:space-y-2">
             {selectedLabel ? (
-              <p className="text-lg text-foreground">
+              <p className="text-sm sm:text-base md:text-lg text-foreground">
                 Selected: <span className="font-medium">{selectedLabel}</span>
               </p>
             ) : (
-              <p className="text-lg text-foreground">
-                {"Drag & drop your file here, or "}
+              <p className="text-sm sm:text-base md:text-lg text-foreground">
+                {"Drag & drop file, or "}
                 <span className="text-emerald-700 underline underline-offset-4">
                   browse
                 </span>
               </p>
             )}
-            <p className="text-sm text-muted-foreground">{acceptedText}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              {acceptedText}
+            </p>
           </div>
         </SelectTrigger>
 
