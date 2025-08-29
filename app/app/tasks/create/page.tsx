@@ -23,6 +23,7 @@ export default function CreateTaskPage() {
   const [description, setDescription] = useState("");
   const [showScrollDownIndicator, setShowScrollDownIndicator] = useState(false);
   const [showScrollUpIndicator, setShowScrollUpIndicator] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [todos, setTodos] = useState<
     Array<{
@@ -116,6 +117,7 @@ export default function CreateTaskPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsCreating(true);
 
     // Filter out empty todos
     const validTodos = todos.filter((todo) => todo.content.trim() !== "");
@@ -137,6 +139,7 @@ export default function CreateTaskPage() {
       router.refresh();
     } catch (error) {
       console.error("Error creating task:", error);
+      setIsCreating(false);
     }
   };
 
@@ -286,7 +289,7 @@ export default function CreateTaskPage() {
               Cancel
             </Button>
             <Button type="submit" form="task-form">
-              Create Task
+              {isCreating ? "Creating..." : "Create Task"}
             </Button>
           </div>
         </CardFooter>

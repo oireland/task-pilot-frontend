@@ -104,7 +104,7 @@ export default function VerifyForm({
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate(values)) {
-      toast("Fix form errors", {
+      toast.warning("Fix form errors", {
         description: "Please correct the highlighted fields and try again.",
       });
       return;
@@ -113,9 +113,9 @@ export default function VerifyForm({
     setLoading(true);
     try {
       const { token } = await api.post("/api/v1/auth/verify", values);
-      login(token); // Assumes login function from useUser hook
+      login(token);
 
-      toast("Email verified", {
+      toast.success("Email verified", {
         description: "Your email has been successfully verified.",
       });
 
@@ -151,7 +151,7 @@ export default function VerifyForm({
     }
 
     if (secondsLeft > 0) {
-      toast("Please wait", {
+      toast.warning("Please wait", {
         description: `You can resend a code in ${secondsLeft}s.`,
       });
       return;
@@ -165,7 +165,7 @@ export default function VerifyForm({
       setResendUntil(until);
       localStorage.setItem(cooldownKey(values.email), String(until));
 
-      toast("Code sent", {
+      toast.info("Code sent", {
         description: "A new verification code has been emailed to you.",
       });
     } catch (err: any) {

@@ -93,18 +93,19 @@ export default function TasksPage() {
   };
 
   const handleBatchDelete = async () => {
-    try {
-      await api.delete("/api/v1/tasks/batch", Array.from(selectedIds));
-      toast("Tasks deleted successfully");
-      setSelectedIds(new Set());
-      fetchTasks(); // Refresh the list
-    } catch (e: any) {
-      toast.error("Failed to delete tasks",
-        {description: e.message,
-      });
-    } finally {
-      setIsDeleteDialogOpen(false);
-    }
+    const request = api.delete("/api/v1/tasks/batch", Array.from(selectedIds));
+    toast.promise(request, {
+      loading: "Deleting tasks...",
+      success() {
+        setSelectedIds(new Set());
+        fetchTasks(); // Refresh the list
+        return "Tasks deleted successfully";
+      },
+      error: "Failed to delete tasks",
+      finally() {
+        setIsDeleteDialogOpen(false);
+      },
+    });
   };
 
   const tasks = useMemo(() => data?.content ?? [], [data]);

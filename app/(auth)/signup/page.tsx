@@ -112,7 +112,7 @@ function SignupContent() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate(values)) {
-      toast("Fix form errors", {
+      toast.warning("Fix form errors", {
         description: "Please correct the highlighted fields and try again.",
       });
       return;
@@ -136,7 +136,7 @@ function SignupContent() {
 
       router.push(redirectUrl);
     } catch (err: any) {
-      toast("Signup error", { description: err?.message ?? "Unknown error" });
+      toast.error("Signup error", { description: err?.message ?? "Something went wrong." });
     } finally {
       setLoading(false);
     }

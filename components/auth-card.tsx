@@ -69,7 +69,7 @@ export function AuthCard({
     e.preventDefault();
 
     if (!isFormValid) {
-      toast("Fix form errors", {
+      toast.warning("Fix form errors", {
         description: "Please satisfy the form requirements before continuing.",
       });
       return;
