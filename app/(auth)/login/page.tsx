@@ -90,7 +90,7 @@ function LoginContent() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate(values) || !canSubmit) {
-      toast("Fix form errors", {
+      toast.warning("Fix form errors", {
         description: "Please correct the highlighted fields and try again.",
       });
       return;
@@ -108,7 +108,7 @@ function LoginContent() {
         router.push("/app/tasks");
       }
     } catch (err: any) {
-      toast("Login error", {
+      toast.error("Login error", {
         description: err?.message ?? "Unknown error",
       });
     } finally {

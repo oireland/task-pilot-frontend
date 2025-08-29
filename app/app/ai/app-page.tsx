@@ -143,12 +143,12 @@ export function AppPageClient() {
       setDescription(responseData.description || "");
 
       if (!responseData.todos || responseData.todos.length === 0) {
-        toast("No todos found", {
+        toast.warning("No todos found", {
           description:
             "The AI could not identify any actionable todos in the document.",
         });
       } else {
-        toast("Document extracted", {
+        toast.success("Document extracted", {
           description: `Found and saved ${responseData.todos.length} items.`,
         });
       }
@@ -166,7 +166,7 @@ export function AppPageClient() {
     setIsCreating(true);
     try {
       await api.post(`/api/v1/notion/taskList/${taskList.id}`);
-      toast("Notion page created!", {
+      toast.success("Notion page created!", {
         description: `Created a task list for "${title}".`,
       });
       handleClear();
@@ -205,7 +205,7 @@ export function AppPageClient() {
 
       // 3. Use the modern Clipboard API to copy the text.
       await navigator.clipboard.writeText(clipboardText);
-      toast("Items copied to clipboard!");
+      toast.success("Items copied to clipboard!");
     } catch (err: any) {
       toast.error("Failed to copy", {
         description: "Could not copy items to clipboard.",
@@ -226,7 +226,7 @@ export function AppPageClient() {
         description,
         todos: todosList,
       });
-      toast("Success!", { description: "Your changes have been saved." });
+      toast.success("Success!", { description: "Your changes have been saved." });
     } catch (err: any) {
       toast.error("Error saving changes", {
         description: err.message || "An unknown error occurred.",

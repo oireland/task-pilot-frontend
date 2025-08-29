@@ -107,8 +107,8 @@ export function TaskCard({
       }
 
       // Show error toast
-      toast("Failed to update todo", {
-        description: "The task could not be updated. Please try again.",
+      toast.error("Failed to update todo", {
+        description: "The todo could not be updated. Please try again.",
       });
     } finally {
       // Remove loading state
@@ -121,24 +121,19 @@ export function TaskCard({
   };
 
   const handleExportNotion = async () => {
-    toast("Exporting...", {
-      description: "We are exporting your task list to Notion.",
+    const request = api.post(`/api/v1/notion/taskList/${task.id}`);
+    toast.promise(request, {
+      loading: "Exporting to Notion...",
+      success: `Created a checklist for "${task.title}"`,
+      error(e) {
+        if (e.message.includes("invalid schema")) {
+          setShowSchemaErrorModal(true);
+          return "Incorrect Database Structure";
+        } else {
+          return "Failed to create Notion page";
+        }
+      },
     });
-    try {
-      await api.post(`/api/v1/notion/taskList/${task.id}`);
-      toast("Notion page created!", {
-        description: `Created a checklist for “${task.title}”.`,
-      });
-    } catch (e: any) {
-      if (e.message.includes("invalid schema")) {
-        setShowSchemaErrorModal(true);
-      } else {
-        toast("Failed to create Notion page", {
-          description: e.message,
-        });
-      }
-    } finally {
-    }
   };
 
   const handleCopyToClipboard = async () => {
@@ -165,13 +160,11 @@ export function TaskCard({
       // 3. Use the modern Clipboard API to copy the text.
       await navigator.clipboard.writeText(clipboardText);
 
-      toast("Items copied to clipboard!");
+      toast.success("Items copied to clipboard!");
     } catch (err: any) {
-      toast("Failed to copy", {
+      toast.error("Failed to copy", {
         description: "Could not copy items to clipboard.",
       });
-    } finally {
-      // Add a small delay to show the checkmark
     }
   };
 
@@ -196,7 +189,7 @@ export function TaskCard({
       // Notify parent to refresh the list
       if (onDelete) onDelete();
     } catch (error) {
-      toast("Failed to delete task", {
+      toast.error("Failed to delete task", {
         description: "The task could not be deleted. Please try again.",
       });
     }

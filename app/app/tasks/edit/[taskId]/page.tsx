@@ -29,7 +29,9 @@ export default function EditTaskPage() {
   const [description, setDescription] = useState("");
   const [showScrollDownIndicator, setShowScrollDownIndicator] = useState(false);
   const [showScrollUpIndicator, setShowScrollUpIndicator] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+
   const [todos, setTodos] = useState<
     Array<{
       id?: string;
@@ -134,6 +136,7 @@ export default function EditTaskPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
 
     // Filter out empty todos
     const validTodos = todos.filter((todo) => todo.content.trim() !== "");
@@ -158,6 +161,7 @@ export default function EditTaskPage() {
       router.refresh();
     } catch (error) {
       console.error("Error updating task:", error);
+      setIsSaving(false);
     }
   };
 
@@ -334,7 +338,7 @@ export default function EditTaskPage() {
               Cancel
             </Button>
             <Button type="submit" form="task-form">
-              Save Changes
+              {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </CardFooter>

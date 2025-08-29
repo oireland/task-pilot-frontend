@@ -21,7 +21,14 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Crown, Database, ExternalLink, Loader2, Save } from "lucide-react";
+import {
+  Crown,
+  Database,
+  ExternalLink,
+  HelpCircle,
+  Loader2,
+  Save,
+} from "lucide-react";
 import { useUser } from "@/hooks/use-user";
 import { ConnectNotion } from "./connect-notion";
 import { Progress } from "@/components/ui/progress";
@@ -30,6 +37,14 @@ import { STRIPE_PRO_MONTHLY_LINK, STRIPE_PRO_YEARLY_LINK } from "@/lib/stripe";
 import { Switch } from "@/components/ui/switch";
 import Link from "next/link";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 type NotionDatabase = {
   id: string;
@@ -51,6 +66,7 @@ export default function SettingsPage() {
   const [databases, setDatabases] = useState<NotionDatabase[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [isYearly, setIsYearly] = useState(false);
+  const [showDatabaseHelp, setShowDatabaseHelp] = useState(false);
 
   const isNotionConnected = useMemo(() => !!user?.notionWorkspaceName, [user]);
 
@@ -92,7 +108,7 @@ export default function SettingsPage() {
     };
 
     fetchData();
-  }, [user, isNotionConnected, toast]);
+  }, [user, isNotionConnected]);
 
   const selectedDb = useMemo(
     () => databases.find((d) => d.id === selectedId),
@@ -101,20 +117,22 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     if (!selectedDb) return;
-    try {
-      await api.put("/api/v1/users/me/notion-database", {
-        databaseId: selectedDb.id,
-        databaseName: selectedDb.name,
-      });
-      toast("Default database saved", {
-        description: `New tasks will be created in “${selectedDb.name}”.`,
-      });
-      await refreshUser();
-    } catch (error: any) {
-      toast.error("Error", {
-        description: "Could not save your selected database.",
-      });
-    }
+
+    const request = api.put("/api/v1/users/me/notion-database", {
+      databaseId: selectedDb.id,
+      databaseName: selectedDb.name,
+    });
+
+    toast.promise(request, {
+      loading: "Saving...",
+      async success() {
+        await refreshUser();
+
+        return "Default database saved";
+      },
+
+      error: "Could not save your selected database",
+    });
   };
 
   if (!user) {
@@ -159,24 +177,42 @@ export default function SettingsPage() {
               </Button>
             </div>
             <Separator />
-            <div className="space-y-2">
-              <Label htmlFor="database">Target database</Label>
-              <Select
-                value={selectedId}
-                onValueChange={(v) => setSelectedId(v)}
-              >
-                <SelectTrigger id="database" className="w-full">
-                  <SelectValue placeholder="Select a Notion database" />
-                </SelectTrigger>
-                <SelectContent>
-                  {databases.map((db) => (
-                    <SelectItem key={db.id} value={db.id}>
-                      {db.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {loadingData ? (
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading database options...
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="database">Target database</Label>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => setShowDatabaseHelp(true)}
+                  >
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    <span className="sr-only">Database structure help</span>
+                  </Button>
+                </div>
+                <Select
+                  value={selectedId}
+                  onValueChange={(v) => setSelectedId(v)}
+                >
+                  <SelectTrigger id="database" className="w-full">
+                    <SelectValue placeholder="Select a Notion database" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {databases.map((db) => (
+                      <SelectItem key={db.id} value={db.id}>
+                        {db.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="flex gap-3">
               <Button
                 className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
@@ -192,6 +228,12 @@ export default function SettingsPage() {
       ) : (
         <ConnectNotion />
       )}
+
+      {/* Database Help Dialog */}
+      <DatabaseHelpDialog
+        open={showDatabaseHelp}
+        onOpenChange={setShowDatabaseHelp}
+      />
 
       {/* Plan & Usage Card */}
       <Card>
@@ -287,6 +329,7 @@ export default function SettingsPage() {
   );
 }
 
+// Usage Bar component
 function UsageBar({
   label,
   used,
@@ -310,5 +353,66 @@ function UsageBar({
       </div>
       <Progress value={percent} />
     </div>
+  );
+}
+
+// Extracted Database Help Dialog component
+function DatabaseHelpDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Required Notion Database Structure</DialogTitle>
+          <DialogDescription>
+            TaskPilot requires specific columns in your Notion database to work
+            correctly.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          <h4 className="font-medium text-sm">Required Columns:</h4>
+          <ul className="list-disc pl-5 space-y-2 text-sm">
+            <li>
+              <span className="font-semibold">Title</span> - A title column for
+              task list titles
+            </li>
+            <li>
+              <span className="font-semibold">Status</span> - A status column
+              for tracking completion
+            </li>
+            <li>
+              <span className="font-semibold">Description</span> - A text column
+              for task list details
+            </li>
+          </ul>
+
+          <Separator />
+
+          <div className="bg-muted/50 p-3 rounded-md">
+            <p className="text-sm font-medium mb-2">💡 Recommendation</p>
+            <p className="text-sm text-muted-foreground">
+              We strongly recommend using our template when connecting your
+              Notion account for the best experience. The template includes all
+              required columns and proper configuration.
+            </p>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            If you select a database with an incompatible structure, TaskPilot
+            will notify you when trying to export tasks.
+          </p>
+        </div>
+
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)}>Got it</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
