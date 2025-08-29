@@ -437,25 +437,25 @@ export function AppPageClient() {
                       <Clipboard className="h-4 w-4" />
                       <span>{isCopying ? "Copied!" : "Copy list"}</span>
                     </Button>
+                    {isNotionConnected && isDatabaseSelected ? (
+                      notionButton
+                    ) : (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>{notionButton}</span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>
+                              {isNotionConnected
+                                ? "Select a target database in your settings to export."
+                                : "Connect to Notion in your settings to export."}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                   </>
-                )}
-                {isNotionConnected && isDatabaseSelected ? (
-                  notionButton
-                ) : (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span>{notionButton}</span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          {isNotionConnected
-                            ? "Select a target database in your settings to export."
-                            : "Connect to Notion in your settings to export."}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
                 )}
               </div>
             </div>
