@@ -307,8 +307,11 @@ export function TaskCard({
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleExportNotion}>
+              <DropdownMenuContent align="end" className="min-w-48">
+                <DropdownMenuItem
+                  onClick={handleExportNotion}
+                  className="h-10 px-4 py-2"
+                >
                   <Image
                     src="/icons/notion-logo.svg"
                     alt="Notion Logo"
@@ -317,16 +320,22 @@ export function TaskCard({
                   />{" "}
                   Export to Notion
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleCopyToClipboard}>
+                <DropdownMenuItem
+                  onClick={handleCopyToClipboard}
+                  className="h-10 px-4 py-2"
+                >
                   <Clipboard className="h-4 w-4 mr-2" />
                   Copy list
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleEdit}>
+                <DropdownMenuItem
+                  onClick={handleEdit}
+                  className="h-10 px-4 py-2"
+                >
                   <Edit className="mr-2 h-4 w-4" /> Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleDelete}
-                  className="text-red-600 focus:text-red-600"
+                  className="text-red-600 focus:text-red-600 h-10 px-4 py-2"
                 >
                   <Trash2 className="mr-2 h-4 w-4" /> Delete
                 </DropdownMenuItem>

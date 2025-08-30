@@ -295,13 +295,24 @@ export default function SettingsPage() {
                     />
                     <Label htmlFor="billing-cycle">Yearly (Save 17%)</Label>
                   </div>
-                  <Link
-                    target="_blank"
-                    className={buttonVariants({ className: "w-full" })}
-                    href={upgradeLink + "?prefilled_email=" + user.email}
-                  >
-                    Upgrade to Pro
-                  </Link>
+                  <div className="flex gap-2">
+                    <Link
+                      href="/pricing"
+                      className={buttonVariants({
+                        variant: "outline",
+                        className: "flex-1",
+                      })}
+                    >
+                      View Pricing
+                    </Link>
+                    <Link
+                      target="_blank"
+                      className={buttonVariants({ className: "flex-1" })}
+                      href={upgradeLink + "?prefilled_email=" + user.email}
+                    >
+                      Upgrade to Pro
+                    </Link>
+                  </div>
                 </div>
               )}
             </>

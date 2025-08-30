@@ -192,7 +192,9 @@ export default function EditTaskPage() {
     <div className="max-w-5xl mx-auto p-4 h-[calc(100vh-6rem)]">
       <Card className="flex flex-col h-full">
         <CardHeader className="flex-shrink-0">
-          <CardTitle>Edit Task</CardTitle>
+          <CardTitle className="text-xl font-semibold md:text-2xl">
+            Edit Task
+          </CardTitle>
         </CardHeader>
 
         {/* Scrollable content area with custom scrollbar */}
@@ -305,7 +307,7 @@ export default function EditTaskPage() {
           </form>
 
           {/* Scroll indicators */}
-          <div className="fixed left-8 bottom-15 md:left-auto md:right-8 md:bottom-24 flex flex-col gap-1 md:gap-2 pointer-events-auto">
+          <div className="fixed left-8 bottom-12 md:left-auto md:right-8 md:bottom-24 flex flex-col gap-1 md:gap-2 pointer-events-auto">
             {showScrollUpIndicator && (
               <button
                 onClick={scrollToTop}
