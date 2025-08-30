@@ -239,7 +239,7 @@ export default function VerifyForm({
 
             <Button
               type="submit"
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               disabled={loading || !isValid}
             >
               {loading ? (
@@ -283,7 +283,7 @@ export default function VerifyForm({
 
           <div className="text-sm text-gray-600">
             <span className="mr-2">Already verified?</span>
-            <Link href="/login" className="text-emerald-700 hover:underline">
+            <Link href="/login" className="text-primary hover:underline">
               Log in
             </Link>
           </div>

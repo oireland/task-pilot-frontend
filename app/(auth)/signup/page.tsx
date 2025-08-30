@@ -136,7 +136,9 @@ function SignupContent() {
 
       router.push(redirectUrl);
     } catch (err: any) {
-      toast.error("Signup error", { description: err?.message ?? "Something went wrong." });
+      toast.error("Signup error", {
+        description: err?.message ?? "Something went wrong.",
+      });
     } finally {
       setLoading(false);
     }
@@ -224,7 +226,7 @@ function SignupContent() {
                     <div
                       key={i}
                       className={`flex items-center gap-2 text-xs ${
-                        r.ok ? "text-emerald-700" : "text-red-600"
+                        r.ok ? "text-primary" : "text-red-600"
                       }`}
                     >
                       {r.ok ? (
@@ -236,7 +238,7 @@ function SignupContent() {
                     </div>
                   ))}
                   {values.password.length > 0 && allPwOk && (
-                    <div className="flex items-center gap-2 text-xs text-emerald-700">
+                    <div className="flex items-center gap-2 text-xs text-primary">
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       Password meets all requirements.
                     </div>
@@ -258,7 +260,7 @@ function SignupContent() {
 
             <Button
               type="submit"
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               disabled={loading || !isValid}
             >
               {loading ? (
@@ -276,7 +278,7 @@ function SignupContent() {
 
           <div className="text-sm text-gray-600">
             <span className="mr-2">Already have an account?</span>
-            <Link href="/login" className="text-emerald-700 hover:underline">
+            <Link href="/login" className="text-primary hover:underline">
               Log in
             </Link>
           </div>

@@ -95,9 +95,9 @@ export function SampleFileSelector({
             "flex flex-col items-center justify-center gap-0  [&>svg]:hidden"
           )}
         >
-          <span className="inline-flex h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 items-center justify-center rounded-xl bg-emerald-50">
+          <span className="inline-flex h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 items-center justify-center rounded-xl bg-primary/10">
             <Upload
-              className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-emerald-700"
+              className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-primary"
               aria-hidden
             />
           </span>
@@ -110,7 +110,7 @@ export function SampleFileSelector({
             ) : (
               <p className="text-sm sm:text-base md:text-lg text-foreground">
                 {"Drag & drop file, or "}
-                <span className="text-emerald-700 underline underline-offset-4">
+                <span className="text-primary underline underline-offset-4">
                   browse
                 </span>
               </p>

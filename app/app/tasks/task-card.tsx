@@ -232,7 +232,7 @@ export function TaskCard({
           variant="outline"
           className={cn(
             baseClasses,
-            "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300 dark:border-green-700"
+            "bg-primary/80 text-primary-foreground   dark:border-primary/30 border-primary/40"
           )}
         >
           <CheckCircle2 className="h-3 w-3 mr-1.5" />
@@ -247,7 +247,7 @@ export function TaskCard({
           variant="outline"
           className={cn(
             baseClasses,
-            "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border-blue-300 dark:border-blue-700"
+            "bg-secondary text-secondary-foreground border-secondary"
           )}
         >
           <AlertCircle className="h-3 w-3 mr-1.5" />

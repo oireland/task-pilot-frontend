@@ -131,7 +131,7 @@ export function AuthCard({
                       unmet.
                     </div>
                   ) : allPasswordRulesPass ? (
-                    <div className="flex items-center gap-2 text-xs text-emerald-700">
+                    <div className="flex items-center gap-2 text-xs text-primary">
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       Password meets all requirements.
                     </div>
@@ -160,7 +160,7 @@ export function AuthCard({
 
             <Button
               type="submit"
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               disabled={loading || !isFormValid}
             >
               {loading ? (
@@ -180,7 +180,7 @@ export function AuthCard({
             <span className="mr-2">Want something else?</span>
             <Link
               href={altAction.href}
-              className={cn("text-emerald-700 hover:underline")}
+              className={cn("text-primary hover:underline")}
             >
               {altAction.label}
             </Link>

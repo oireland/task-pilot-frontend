@@ -184,7 +184,7 @@ function LoginContent() {
 
             <Button
               type="submit"
-              className="w-full bg-emerald-600 text-white hover:bg-emerald-700"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
               disabled={loading || !canSubmit}
             >
               {loading ? (
@@ -202,7 +202,7 @@ function LoginContent() {
 
           <div className="text-sm text-gray-600">
             <span className="mr-2">New here?</span>
-            <Link href="/signup" className="text-emerald-700 hover:underline">
+            <Link href="/signup" className="text-primary hover:underline">
               Create an account
             </Link>
           </div>

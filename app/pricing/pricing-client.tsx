@@ -60,23 +60,23 @@ export function PricingClient() {
             </div>
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-2">
-                <Check className="h-5 w-5 text-emerald-600" />
+                <Check className="h-5 w-5 text-primary" />
                 <span>
                   <span className="font-semibold">15</span> requests per month
                 </span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-5 w-5 text-emerald-600" />
+                <Check className="h-5 w-5 text-primary" />
                 <span>
                   <span className="font-semibold">3</span> requests per day
                 </span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-5 w-5 text-emerald-600" />
+                <Check className="h-5 w-5 text-primary" />
                 <span>AI-powered task extraction</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-5 w-5 text-emerald-600" />
+                <Check className="h-5 w-5 text-primary" />
                 <span>Notion integration</span>
               </li>
             </ul>
@@ -90,7 +90,7 @@ export function PricingClient() {
             ) : (
               <Button
                 asChild
-                className="w-full bg-emerald-600 text-white hover:bg-emerald-700"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <Link href="/signup">Get Started</Link>
               </Button>
@@ -99,10 +99,10 @@ export function PricingClient() {
         </Card>
 
         {/* Pro Plan */}
-        <Card className="border-emerald-500 ring-2 ring-emerald-500">
+        <Card className="border-primary ring-2 ring-primary">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Crown className="h-6 w-6 text-emerald-600" />
+              <Crown className="h-6 w-6 text-primary" />
               Pro
             </CardTitle>
             <CardDescription>
@@ -118,23 +118,23 @@ export function PricingClient() {
             </div>
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-2">
-                <Check className="h-5 w-5 text-emerald-600" />
+                <Check className="h-5 w-5 text-primary" />
                 <span>
                   <span className="font-semibold">100</span> requests per month
                 </span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-5 w-5 text-emerald-600" />
+                <Check className="h-5 w-5 text-primary" />
                 <span>
                   <span className="font-semibold">15</span> requests per day
                 </span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-5 w-5 text-emerald-600" />
+                <Check className="h-5 w-5 text-primary" />
                 <span>All features from Free</span>
               </li>
               <li className="flex items-center gap-2">
-                <Check className="h-5 w-5 text-emerald-600" />
+                <Check className="h-5 w-5 text-primary" />
                 <span>Priority support</span>
               </li>
             </ul>

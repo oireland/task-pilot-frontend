@@ -215,7 +215,7 @@ export default function SettingsPage() {
             )}
             <div className="flex gap-3">
               <Button
-                className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+                className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
                 onClick={handleSave}
                 disabled={!selectedDb}
               >
