@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -12,10 +13,11 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { X, Plus, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { TaskListDTO, TodoDTO } from "@/app/app/tasks/types";
 import { api } from "@/lib/api";
 import { DateTimePicker } from "@/components/date-time-picker";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface TaskEditorProps {
   taskId?: string; // Optional - if provided, will fetch existing task data
@@ -33,6 +35,7 @@ interface TaskEditorProps {
   submitLabel?: string; // "Create Task", "Save Changes", etc.
   isSubmitting?: boolean; // For external loading state
   cardTitle?: string; // "Create New Task", "Edit Task", etc.
+  defaultDeadlineTime?: string; // Default time for new deadlines, format: "HH:mm"
 }
 
 interface LocalTodoItem {
@@ -50,6 +53,7 @@ export function TaskEditor({
   submitLabel = "Save",
   isSubmitting = false,
   cardTitle = "Task Editor",
+  defaultDeadlineTime = "09:00", // Default to 9 AM for task deadlines
 }: TaskEditorProps) {
   const [loading, setLoading] = useState(!!taskId); // Only load if we need to fetch data
   const [title, setTitle] = useState(initialData?.title || "");
@@ -58,6 +62,12 @@ export function TaskEditor({
   );
   const [showScrollDownIndicator, setShowScrollDownIndicator] = useState(false);
   const [showScrollUpIndicator, setShowScrollUpIndicator] = useState(false);
+  const [globalDeadline, setGlobalDeadline] = useState<Date | undefined>(
+    undefined
+  );
+  const [hasGlobalDeadline, setHasGlobalDeadline] = useState(false);
+  const [showGlobalDeadlineWarning, setShowGlobalDeadlineWarning] =
+    useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const [todos, setTodos] = useState<LocalTodoItem[]>(() => {
@@ -151,7 +161,10 @@ export function TaskEditor({
   }, [initialData]);
 
   const addTodo = useCallback(() => {
-    setTodos((prev) => [...prev, { content: "", checked: false }]);
+    setTodos((prev) => [
+      ...prev,
+      { content: "", checked: false, deadline: globalDeadline || undefined },
+    ]);
   }, []);
 
   const removeTodo = useCallback((index: number) => {
@@ -181,9 +194,51 @@ export function TaskEditor({
         newTodos[index].deadline = deadline;
         return newTodos;
       });
+
+      // Clear global deadline when individual deadline is changed
+      if (hasGlobalDeadline) {
+        setHasGlobalDeadline(false);
+        setGlobalDeadline(undefined);
+        setShowGlobalDeadlineWarning(false);
+      }
     },
-    []
+    [hasGlobalDeadline]
   );
+
+  const handleGlobalDeadlineChange = useCallback(
+    (date: Date | undefined) => {
+      setGlobalDeadline(date);
+
+      if (date) {
+        // Check if any todos have existing deadlines
+        const hasExistingDeadlines = todos.some((todo) => todo.deadline);
+        setShowGlobalDeadlineWarning(hasExistingDeadlines);
+      } else {
+        setHasGlobalDeadline(false);
+        setShowGlobalDeadlineWarning(false);
+      }
+    },
+    [todos]
+  );
+
+  const applyGlobalDeadline = useCallback(() => {
+    if (!globalDeadline) return;
+
+    setTodos((prev) =>
+      prev.map((todo) => ({
+        ...todo,
+        deadline: globalDeadline,
+      }))
+    );
+
+    setHasGlobalDeadline(true);
+    setShowGlobalDeadlineWarning(false);
+  }, [globalDeadline]);
+
+  const cancelGlobalDeadline = useCallback(() => {
+    setGlobalDeadline(undefined);
+    setShowGlobalDeadlineWarning(false);
+  }, []);
 
   // Scroll handlers
   const scrollToBottom = () => {
@@ -289,6 +344,84 @@ export function TaskEditor({
               />
             </div>
 
+            {/* Global Deadline Section */}
+            <div className="space-y-3 p-4 bg-background rounded-lg border">
+              <div className="flex items-center justify-between">
+                <label className="block font-medium text-base md:text-lg">
+                  Global Deadline
+                </label>
+                {hasGlobalDeadline && (
+                  <Badge variant="secondary" className="text-xs">
+                    Applied to all items
+                  </Badge>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <DateTimePicker
+                  date={globalDeadline}
+                  setDate={handleGlobalDeadlineChange}
+                  defaultTime={defaultDeadlineTime}
+                  className="w-full"
+                />
+
+                {showGlobalDeadlineWarning && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      This will overwrite existing deadlines on all todo items.
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="destructive"
+                          onClick={applyGlobalDeadline}
+                        >
+                          Apply to All
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={cancelGlobalDeadline}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {globalDeadline &&
+                  !showGlobalDeadlineWarning &&
+                  !hasGlobalDeadline && (
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={applyGlobalDeadline}
+                        variant="default"
+                      >
+                        Apply to All Items
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={cancelGlobalDeadline}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Set a deadline that will be applied to all todo items.
+                Individual deadline changes will clear this global setting.
+              </p>
+            </div>
+
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <label className="block font-medium text-base md:text-lg">
@@ -337,6 +470,12 @@ export function TaskEditor({
 
                   {/* Date picker */}
                   <div className="p-3">
+                    {hasGlobalDeadline && (
+                      <div className="text-xs text-primary mb-2 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        Using global deadline - click to override
+                      </div>
+                    )}
                     <DateTimePicker
                       date={
                         todo.deadline instanceof Date
@@ -344,6 +483,12 @@ export function TaskEditor({
                           : undefined
                       }
                       setDate={(date) => updateTodoDeadline(index, date)}
+                      defaultTime={defaultDeadlineTime}
+                      className={
+                        hasGlobalDeadline
+                          ? "border-primary bg-secondary/30"
+                          : ""
+                      }
                     />
                   </div>
                 </div>
