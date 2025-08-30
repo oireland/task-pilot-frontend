@@ -98,8 +98,12 @@ function LoginContent() {
 
     setLoading(true);
     try {
-      const { token } = await api.post("/api/v1/auth/login", values);
-      login(token);
+      const { accessToken, refreshToken } = await api.post(
+        "/api/v1/auth/login",
+        values
+      );
+
+      login(accessToken, refreshToken);
 
       const from = searchParams.get("from");
       if (from && from.startsWith("/")) {

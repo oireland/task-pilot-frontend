@@ -112,8 +112,11 @@ export default function VerifyForm({
 
     setLoading(true);
     try {
-      const { token } = await api.post("/api/v1/auth/verify", values);
-      login(token);
+      const { accessToken, refreshToken } = await api.post(
+        "/api/v1/auth/verify",
+        values
+      );
+      login(accessToken, refreshToken);
 
       toast.success("Email verified", {
         description: "Your email has been successfully verified.",

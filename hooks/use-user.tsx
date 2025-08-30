@@ -26,7 +26,7 @@ export type User = {
 type UserContextValue = {
   user: User | null;
   loading: boolean;
-  login: (token: string) => void;
+  login: (accessToken: string, refreshToken: string) => void;
   logout: () => void;
   refreshUser: () => Promise<void>;
 };
@@ -37,19 +37,23 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const login = (token: string) => {
-    localStorage.setItem("task_pilot_auth_token", token);
+  const login = (accessToken: string, refreshToken: string) => {
+    localStorage.setItem("task_pilot_access_token", accessToken);
+    localStorage.setItem("task_pilot_refresh_token", refreshToken);
     refreshUser();
   };
 
   const logout = () => {
-    localStorage.removeItem("task_pilot_auth_token");
+    localStorage.removeItem("task_pilot_access_token");
+    localStorage.removeItem("task_pilot_refresh_token");
     setUser(null);
   };
 
   const refreshUser = useCallback(async () => {
-    const token = localStorage.getItem("task_pilot_auth_token");
-    if (!token) {
+    const accessToken = localStorage.getItem("task_pilot_access_token");
+    const refreshToken = localStorage.getItem("task_pilot_refresh_token");
+
+    if (!accessToken || !refreshToken) {
       setUser(null);
       setLoading(false);
       return;

@@ -1,8 +1,12 @@
 // A helper function to add the auth token to every API request
-async function fetcher(url: string, options: RequestInit = {}) {
+async function fetcher(
+  url: string,
+  options: RequestInit = {},
+  isRetry = false
+) {
   const headers = new Headers(options.headers);
 
-  const token = localStorage.getItem("task_pilot_auth_token");
+  const token = localStorage.getItem("task_pilot_access_token");
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
@@ -15,6 +19,56 @@ async function fetcher(url: string, options: RequestInit = {}) {
     ...options,
     headers,
   });
+
+  // Handle 401 errors with token refresh
+  if (response.status === 401 && !isRetry) {
+    const refreshToken = localStorage.getItem("task_pilot_refresh_token");
+    if (refreshToken) {
+      try {
+        // Attempt to refresh the token
+        const refreshResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/refresh-token`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ refreshToken }),
+          }
+        );
+
+        if (refreshResponse.ok) {
+          const { accessToken, refreshToken: newRefreshToken } =
+            await refreshResponse.json();
+
+          // Update localStorage with new tokens
+          localStorage.setItem("task_pilot_access_token", accessToken);
+          localStorage.setItem("task_pilot_refresh_token", newRefreshToken);
+
+          // Retry the original request with new token
+          return fetcher(url, options, true);
+        } else {
+          // Refresh failed, logout user
+          localStorage.removeItem("task_pilot_access_token");
+          localStorage.removeItem("task_pilot_refresh_token");
+          window.location.href = "/login";
+          throw new Error("Session expired. Please log in again.");
+        }
+      } catch (refreshError) {
+        // Refresh request failed, logout user
+        localStorage.removeItem("task_pilot_access_token");
+        localStorage.removeItem("task_pilot_refresh_token");
+        window.location.href = "/login";
+        throw new Error("Session expired. Please log in again.");
+      }
+    } else {
+      // No refresh token available, logout user
+      localStorage.removeItem("task_pilot_access_token");
+      localStorage.removeItem("task_pilot_refresh_token");
+      window.location.href = "/login";
+      throw new Error("Session expired. Please log in again.");
+    }
+  }
 
   // --- IMPROVED ERROR HANDLING ---
   if (!response.ok) {
