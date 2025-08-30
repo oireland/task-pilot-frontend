@@ -215,7 +215,7 @@ export default function SettingsPage() {
             )}
             <div className="flex gap-3">
               <Button
-                className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+                className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
                 onClick={handleSave}
                 disabled={!selectedDb}
               >
@@ -295,13 +295,24 @@ export default function SettingsPage() {
                     />
                     <Label htmlFor="billing-cycle">Yearly (Save 17%)</Label>
                   </div>
-                  <Link
-                    target="_blank"
-                    className={buttonVariants({ className: "w-full" })}
-                    href={upgradeLink + "?prefilled_email=" + user.email}
-                  >
-                    Upgrade to Pro
-                  </Link>
+                  <div className="flex gap-2">
+                    <Link
+                      href="/pricing"
+                      className={buttonVariants({
+                        variant: "outline",
+                        className: "flex-1",
+                      })}
+                    >
+                      View Pricing
+                    </Link>
+                    <Link
+                      target="_blank"
+                      className={buttonVariants({ className: "flex-1" })}
+                      href={upgradeLink + "?prefilled_email=" + user.email}
+                    >
+                      Upgrade to Pro
+                    </Link>
+                  </div>
                 </div>
               )}
             </>

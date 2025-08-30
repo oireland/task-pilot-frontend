@@ -14,15 +14,15 @@ import AppDemo from "@/components/app-demo";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white text-gray-900 dark:bg-neutral-950 dark:text-neutral-100 flex flex-col">
+    <div className="min-h-screen bg-background text-gray-900 dark:bg-neutral-950 dark:text-neutral-100 flex flex-col">
       <main>
         {/* Hero */}
         <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/70 via-white to-white dark:from-emerald-900/10 dark:via-transparent dark:to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-background dark:from-primary/10 dark:via-transparent dark:to-transparent pointer-events-none" />
           <div className="container mx-auto px-4 py-20 md:py-28 relative">
             <div className="grid lg:grid-cols-2 gap-10 items-center">
               <div>
-                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 px-3 py-1 text-xs font-medium">
+                <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary px-3 py-1 text-xs font-medium">
                   <Sparkles className="h-3.5 w-3.5" />
                   New • TaskPilot Preview
                 </span>
@@ -38,7 +38,7 @@ export default function LandingPage() {
                   <Button
                     asChild
                     size="lg"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
                   >
                     <Link href="/signup">Get started free</Link>
                   </Button>
@@ -56,23 +56,23 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="lg:pl-6">
-                <Card className="shadow-lg border-emerald-100 dark:border-neutral-800 dark:bg-neutral-900/60">
+                <Card className="shadow-lg border-primary/20 dark:border-neutral-800 dark:bg-neutral-900/60">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/30 p-2">
-                        <Upload className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
+                      <div className="rounded-lg bg-primary/10 dark:bg-primary/20 p-2">
+                        <Upload className="h-5 w-5 text-primary dark:text-primary" />
                       </div>
                       <div className="font-medium">Upload document</div>
                     </div>
                     <div className="mt-4 flex items-center gap-3">
-                      <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/30 p-2">
-                        <Sparkles className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
+                      <div className="rounded-lg bg-primary/10 dark:bg-primary/20 p-2">
+                        <Sparkles className="h-5 w-5 text-primary dark:text-primary" />
                       </div>
                       <div className="font-medium">AI extracts tasks</div>
                     </div>
                     <div className="mt-4 flex items-center gap-3">
-                      <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/30 p-2">
-                        <ListTodo className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
+                      <div className="rounded-lg bg-primary/10 dark:bg-primary/20 p-2">
+                        <ListTodo className="h-5 w-5 text-primary dark:text-primary" />
                       </div>
                       <div className="font-medium">
                         Get a ready-to-use checklist
@@ -86,15 +86,15 @@ export default function LandingPage() {
                         </div>
                         <ul className="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
                           <li className="flex items-center gap-2">
-                            <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+                            <Check className="h-4 w-4 text-primary dark:text-primary" />
                             Week 1: Read chapters 1–2
                           </li>
                           <li className="flex items-center gap-2">
-                            <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+                            <Check className="h-4 w-4 text-primary dark:text-primary" />
                             Submit intro assignment
                           </li>
                           <li className="flex items-center gap-2">
-                            <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+                            <Check className="h-4 w-4 text-primary dark:text-primary" />
                             Set up project workspace
                           </li>
                         </ul>
@@ -125,21 +125,21 @@ export default function LandingPage() {
               title="Upload any doc"
               description="PDF, DOCX, or plain text—TaskPilot handles the formats you use most."
               icon={
-                <Upload className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
+                <Upload className="h-5 w-5 text-primary dark:text-primary" />
               }
             />
             <Feature
               title="AI task extraction"
               description="We detect assignments, exercises, and action items and normalize them into a clean list."
               icon={
-                <Sparkles className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
+                <Sparkles className="h-5 w-5 text-primary dark:text-primary" />
               }
             />
             <Feature
               title="Export anywhere"
               description="Copy your checklist, or send tasks to Notion in one click."
               icon={
-                <Clipboard className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
+                <Clipboard className="h-5 w-5 text-primary dark:text-primary" />
               }
             />
           </div>
@@ -162,7 +162,7 @@ export default function LandingPage() {
 
         {/* CTA */}
         <section className="container mx-auto px-4 pb-20">
-          <div className="rounded-2xl border bg-gradient-to-br from-emerald-50 to-white dark:from-neutral-900 dark:to-neutral-900 dark:border-neutral-800 p-8 md:p-12">
+          <div className="rounded-2xl border bg-gradient-to-br from-primary/5 to-background dark:from-neutral-900 dark:to-neutral-900 dark:border-neutral-800 p-8 md:p-12">
             <div className="grid md:grid-cols-2 items-center gap-6">
               <div>
                 <h2 className="text-2xl md:text-3xl font-semibold">
@@ -176,7 +176,7 @@ export default function LandingPage() {
               <div className="flex gap-3 md:justify-end">
                 <Button
                   asChild
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   <Link href="/signup">Create account</Link>
                 </Button>
@@ -213,7 +213,7 @@ function Feature({
   return (
     <div className="rounded-xl border p-5 dark:border-neutral-800 dark:bg-neutral-900/50">
       <div className="flex items-center gap-3">
-        <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/30 p-2">
+        <div className="rounded-lg bg-primary/10 dark:bg-primary/20 p-2">
           {icon}
         </div>
         <h3 className="font-semibold">{title}</h3>

@@ -212,15 +212,16 @@ export function TaskCard({
 
   // Get the task status badge
   const getTaskStatusBadge = () => {
+    // Base classes for consistent styling
+    const baseClasses =
+      "flex items-center justify-center w-24 h-6 text-xs flex-shrink-0";
+
     // Priority order: Overdue > Completed > In Progress
     if (hasOverdueTodos) {
       return (
-        <Badge
-          variant="destructive"
-          className="flex items-center md:gap-1 text-xs flex-shrink-0"
-        >
-          <Clock className="h-3 w-3" />
-          <span className="hidden md:inline-block">Overdue</span>
+        <Badge variant="destructive" className={cn(baseClasses)}>
+          <Clock className="h-3 w-3 mr-1.5" />
+          <span>Overdue</span>
         </Badge>
       );
     }
@@ -229,10 +230,13 @@ export function TaskCard({
       return (
         <Badge
           variant="outline"
-          className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300 dark:border-green-700 flex items-center md:gap-1 text-xs flex-shrink-0"
+          className={cn(
+            baseClasses,
+            "bg-primary/80 text-primary-foreground   dark:border-primary/30 border-primary/40"
+          )}
         >
-          <CheckCircle2 className="h-3 w-3" />
-          <span className="hidden md:inline-block">Completed</span>
+          <CheckCircle2 className="h-3 w-3 mr-1.5" />
+          <span>Completed</span>
         </Badge>
       );
     }
@@ -241,14 +245,18 @@ export function TaskCard({
       return (
         <Badge
           variant="outline"
-          className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border-blue-300 dark:border-blue-700 flex items-center md:gap-1 text-xs flex-shrink-0"
+          className={cn(
+            baseClasses,
+            "bg-secondary text-secondary-foreground border-secondary"
+          )}
         >
-          <AlertCircle className="h-3 w-3" />
-          <span className="hidden md:inline-block">In Progress</span>
+          <AlertCircle className="h-3 w-3 mr-1.5" />
+          <span>In Progress</span>
         </Badge>
       );
     }
 
+    // Return a placeholder badge to maintain layout consistency
     return null;
   };
 
@@ -299,8 +307,11 @@ export function TaskCard({
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleExportNotion}>
+              <DropdownMenuContent align="end" className="min-w-48">
+                <DropdownMenuItem
+                  onClick={handleExportNotion}
+                  className="h-10 px-4 py-2"
+                >
                   <Image
                     src="/icons/notion-logo.svg"
                     alt="Notion Logo"
@@ -309,16 +320,22 @@ export function TaskCard({
                   />{" "}
                   Export to Notion
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleCopyToClipboard}>
+                <DropdownMenuItem
+                  onClick={handleCopyToClipboard}
+                  className="h-10 px-4 py-2"
+                >
                   <Clipboard className="h-4 w-4 mr-2" />
                   Copy list
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleEdit}>
+                <DropdownMenuItem
+                  onClick={handleEdit}
+                  className="h-10 px-4 py-2"
+                >
                   <Edit className="mr-2 h-4 w-4" /> Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleDelete}
-                  className="text-red-600 focus:text-red-600"
+                  className="text-red-600 focus:text-red-600 h-10 px-4 py-2"
                 >
                   <Trash2 className="mr-2 h-4 w-4" /> Delete
                 </DropdownMenuItem>

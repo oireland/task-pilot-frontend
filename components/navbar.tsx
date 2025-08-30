@@ -38,7 +38,7 @@ export function Navbar() {
           href="/"
           className="font-semibold text-lg md:text-2xl tracking-tight"
         >
-          <span className="text-emerald-600">Task</span>Pilot
+          <span className="text-primary">Task</span>Pilot
         </Link>
 
         {loading ? (
@@ -72,7 +72,8 @@ export function Navbar() {
                 className={cn(
                   buttonVariants({
                     variant: "default",
-                    className: "bg-emerald-600 text-white hover:bg-emerald-700",
+                    className:
+                      "bg-primary text-primary-foreground hover:bg-primary/90",
                   })
                 )}
               >
@@ -136,19 +137,22 @@ export function Navbar() {
                   <Grip className="h-5 md:h-7 w-5 md:w-7" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 mt-1.5">
+              <DropdownMenuContent
+                align="end"
+                className="bg-background w-48 mt-1.5"
+              >
                 <DropdownMenuItem
                   className="flex items-center gap-2 cursor-pointer"
                   onClick={() => router.push("/app/tasks")}
                 >
-                  <BookCheck className="h-4 w-4" />
+                  <BookCheck className="text-primary h-4 w-4" />
                   <span>Tasks</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex items-center gap-2 cursor-pointer"
                   onClick={() => router.push("/app/ai")}
                 >
-                  <SparkleIcon className="h-4 w-4" />
+                  <SparkleIcon className="text-primary h-4 w-4" />
                   <span>AI</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>

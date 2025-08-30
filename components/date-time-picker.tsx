@@ -25,6 +25,7 @@ interface DateTimePickerProps {
   setDate: (date: Date | undefined) => void;
   clearable?: boolean;
   className?: string;
+  defaultTime?: string; // Format: "HH:mm", defaults to "00:00" if not provided
 }
 
 export function DateTimePicker({
@@ -32,9 +33,36 @@ export function DateTimePicker({
   setDate,
   clearable = true,
   className,
+  defaultTime = "00:00",
 }: DateTimePickerProps) {
-  // Remove unnecessary state and just use the props directly
-  // This prevents the infinite update loop
+  const [isOpen, setIsOpen] = React.useState(false);
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+
+  // Disable scrolling when popover is open
+  React.useEffect(() => {
+    if (isOpen) {
+      // Store original overflow values
+      const originalOverflow = document.body.style.overflow;
+
+      // Disable scrolling
+      document.body.style.overflow = "hidden";
+
+      // Handle keyboard events
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape") {
+          setIsOpen(false);
+        }
+      };
+
+      document.addEventListener("keydown", handleKeyDown);
+
+      return () => {
+        // Restore original values when popover closes
+        document.body.style.overflow = originalOverflow;
+        document.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [isOpen]);
 
   const handleDateSelect = (selected: Date | undefined) => {
     if (!selected) {
@@ -42,23 +70,31 @@ export function DateTimePicker({
       return;
     }
 
-    const currentDateTime = date || new Date();
     const newDateTime = new Date(selected);
 
-    // Preserve the time from the current selection
-    newDateTime.setHours(currentDateTime.getHours());
-    newDateTime.setMinutes(currentDateTime.getMinutes());
+    if (date) {
+      // If we already have a date with time, preserve the existing time
+      newDateTime.setHours(date.getHours());
+      newDateTime.setMinutes(date.getMinutes());
+    } else {
+      // If no existing date, use the default time
+      const [hours, minutes] = defaultTime.split(":").map(Number);
+      newDateTime.setHours(hours);
+      newDateTime.setMinutes(minutes);
+    }
 
     setDate(newDateTime);
   };
 
   const handleTimeChange = (timeString: string) => {
     if (!date) {
+      // If no date is selected, create a new date with today's date and the selected time
       const newDateTime = new Date();
-
       const [hours, minutes] = timeString.split(":").map(Number);
       newDateTime.setHours(hours);
       newDateTime.setMinutes(minutes);
+      newDateTime.setSeconds(0);
+      newDateTime.setMilliseconds(0);
 
       setDate(newDateTime);
       return;
@@ -68,12 +104,19 @@ export function DateTimePicker({
     const newDateTime = new Date(date);
     newDateTime.setHours(hours);
     newDateTime.setMinutes(minutes);
+    newDateTime.setSeconds(0);
+    newDateTime.setMilliseconds(0);
 
     setDate(newDateTime);
   };
 
+  const handleDone = () => {
+    setIsOpen(false);
+  };
+
   const handleClear = () => {
     setDate(undefined);
+    setIsOpen(false);
   };
 
   // Generate time options in 30-minute increments
@@ -94,12 +137,13 @@ export function DateTimePicker({
         .getMinutes()
         .toString()
         .padStart(2, "0")}`
-    : undefined;
+    : defaultTime; // Show default time when no date is selected
 
   return (
-    <Popover>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
+          ref={triggerRef}
           variant={"outline"}
           className={cn(
             "w-full justify-start text-left font-normal",
@@ -111,14 +155,26 @@ export function DateTimePicker({
           {date ? format(date, "PPP p") : <span>Pick a date & time</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent
+        className="w-auto p-0"
+        align="start"
+        collisionPadding={20}
+        sideOffset={8}
+        avoidCollisions={true}
+      >
         <Calendar mode="single" selected={date} onSelect={handleDateSelect} />
         <div className="p-3 border-t border-border">
           <Select value={selectedTime} onValueChange={handleTimeChange}>
             <SelectTrigger>
               <SelectValue placeholder="Select a time" />
             </SelectTrigger>
-            <SelectContent position="popper">
+            <SelectContent
+              position="popper"
+              side="bottom"
+              align="start"
+              collisionPadding={20}
+              className="max-h-[200px] overflow-y-auto"
+            >
               {timeOptions.map((time) => (
                 <SelectItem key={time} value={time}>
                   {time}
@@ -127,18 +183,26 @@ export function DateTimePicker({
             </SelectContent>
           </Select>
         </div>
-        {clearable && date && (
-          <div className="p-3 border-t border-border">
+        <div className="p-3 border-t border-border flex gap-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleDone}
+            className="flex-1"
+          >
+            Done
+          </Button>
+          {clearable && date && (
             <Button
               variant="ghost"
               size="sm"
               onClick={handleClear}
-              className="w-full"
+              className="flex-1"
             >
               Clear
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );
