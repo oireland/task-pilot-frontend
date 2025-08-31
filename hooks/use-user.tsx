@@ -10,6 +10,12 @@ import {
 } from "react";
 import { api } from "@/lib/api";
 
+export type Plan = {
+  name: string;
+  requestsPerDay: number;
+  requestsPerMonth: number;
+};
+
 export type User = {
   id?: number;
   email?: string;
@@ -21,6 +27,7 @@ export type User = {
   requestsInCurrentDay?: number;
   requestsInCurrentMonth?: number;
   planRefreshDate?: string;
+  plan?: Plan;
 };
 
 type UserContextValue = {

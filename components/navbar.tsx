@@ -84,8 +84,41 @@ export function Navbar() {
           </>
         ) : (
           // --- LOGGED IN STATE ---
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <ModeToggle />
+
+            {/* App Launcher Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full p-0"
+                  aria-label="App launcher"
+                >
+                  <Grip className="h-5 md:h-7 w-5 md:w-7" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="bg-background w-48 mt-1.5"
+              >
+                <DropdownMenuItem
+                  className="flex items-center gap-2 cursor-pointer"
+                  onClick={() => router.push("/app/tasks")}
+                >
+                  <BookCheck className="text-primary h-4 w-4" />
+                  <span>Tasks</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="flex items-center gap-2 cursor-pointer"
+                  onClick={() => router.push("/app/ai")}
+                >
+                  <SparkleIcon className="text-primary h-4 w-4" />
+                  <span>AI</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* User Menu */}
             <DropdownMenu>
@@ -121,39 +154,6 @@ export function Navbar() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* App Launcher Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-full p-0"
-                  aria-label="App launcher"
-                >
-                  <Grip className="h-5 md:h-7 w-5 md:w-7" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="bg-background w-48 mt-1.5"
-              >
-                <DropdownMenuItem
-                  className="flex items-center gap-2 cursor-pointer"
-                  onClick={() => router.push("/app/tasks")}
-                >
-                  <BookCheck className="text-primary h-4 w-4" />
-                  <span>Tasks</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex items-center gap-2 cursor-pointer"
-                  onClick={() => router.push("/app/ai")}
-                >
-                  <SparkleIcon className="text-primary h-4 w-4" />
-                  <span>AI</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
