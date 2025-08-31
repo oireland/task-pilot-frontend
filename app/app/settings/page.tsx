@@ -51,18 +51,12 @@ type NotionDatabase = {
   name: string;
 };
 
-type PlanDTO = {
-  name: string;
-  requestsPerDay: number;
-  requestsPerMonth: number;
-};
-
 export default function SettingsPage() {
   const { user, refreshUser } = useUser();
+  const plan = user?.plan;
   const router = useRouter();
 
   const [selectedId, setSelectedId] = useState<string | undefined>();
-  const [plan, setPlan] = useState<PlanDTO | null>(null);
   const [databases, setDatabases] = useState<NotionDatabase[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [isYearly, setIsYearly] = useState(false);
@@ -78,27 +72,15 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user) return;
+      if (!isNotionConnected) return;
 
       setLoadingData(true);
       try {
-        // Always fetch the plan data
-        const planDataPromise = api.get("/api/v1/plans/me");
-
         // Only fetch databases if Notion is connected
-        const dbDataPromise = isNotionConnected
-          ? api.get("/api/v1/notion/databases")
-          : Promise.resolve([]);
+        const dbData = await api.get("/api/v1/notion/databases");
 
-        const [planData, dbData] = await Promise.all([
-          planDataPromise,
-          dbDataPromise,
-        ]);
-
-        setPlan(planData as PlanDTO);
         setDatabases(dbData as NotionDatabase[]);
       } catch (error) {
-        console.error(error);
         toast.error("Error", {
           description: "Could not load your settings data.",
         });
@@ -247,12 +229,7 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {loadingData ? (
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Loading plan details...
-            </div>
-          ) : plan ? (
+          {plan ? (
             <>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Current plan</span>

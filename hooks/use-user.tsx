@@ -10,17 +10,24 @@ import {
 } from "react";
 import { api } from "@/lib/api";
 
+export type Plan = {
+  name: string;
+  requestsPerDay: number;
+  requestsPerMonth: number;
+};
+
 export type User = {
-  id?: number;
-  email?: string;
-  enabled?: boolean;
+  id: number;
+  email: string;
+  enabled: boolean;
   notionWorkspaceName?: string;
   notionWorkspaceIcon?: string;
   notionTargetDatabaseId?: string;
   notionTargetDatabaseName?: string;
-  requestsInCurrentDay?: number;
-  requestsInCurrentMonth?: number;
-  planRefreshDate?: string;
+  requestsInCurrentDay: number;
+  requestsInCurrentMonth: number;
+  planRefreshDate: string;
+  plan: Plan;
 };
 
 type UserContextValue = {
